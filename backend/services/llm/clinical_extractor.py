@@ -35,6 +35,18 @@ WORD_TO_NUMBER: dict[str, str] = {
     "teen": "3",
     "char": "4",
     "paanch": "5",
+    "ondhu": "1",
+    "ondu": "1",
+    "eradu": "2",
+    "mooru": "3",
+    "naalku": "4",
+    "nalku": "4",
+    "aidu": "5",
+    "aaru": "6",
+    "elu": "7",
+    "entu": "8",
+    "ombattu": "9",
+    "hattu": "10",
 }
 
 # Standard clinical drug forms
@@ -144,11 +156,11 @@ FREQ_PATTERNS = [
     (r"\b(?:0-1-0|zero[- ]one[- ]zero|010)\b", "0-1-0"),
     (r"\b(?:0-1-1|zero[- ]one[- ]one|011)\b", "0-1-1"),
     (r"\b(?:1-1-0|one[- ]one[- ]zero|110)\b", "1-1-0"),
-    (r"\b(?:three times a day|thrice a day|3 times a day|teen baar|tds)\b", "TDS"),
-    (r"\b(?:twice daily|twice a day|2 times a day|do baar|morning and night|morning and evening|subah shaam|bd|bid|bot)\b", "BD"),
-    (r"\b(?:once daily|once a day|1 time a day|ek baar|subah|in the morning|in morning|morning|od)\b", "OD"),
+    (r"\b(?:three times a day|thrice a day|3 times a day|din mein teen baar|teen baar|dinakke mooru sala|mooru sala|tds)\b", "TDS"),
+    (r"\b(?:twice daily|twice a day|2 times a day|din mein do baar|do baar|dinakke eradu sala|eradu sala|morning and night|morning and evening|subah shaam|bd|bid|bot)\b", "BD"),
+    (r"\b(?:once daily|once a day|1 time a day|din mein ek baar|ek baar|dinakke ondhu sala|ondhu sala|subah|beligge|in the morning|in morning|morning|od)\b", "OD"),
     (r"\b(?:four times a day|4 times a day|qid)\b", "QID"),
-    (r"\b(?:at night|bedtime|raat ko|hs)\b", "HS"),
+    (r"\b(?:at night|bedtime|raat ko|raathri|raatri|hs)\b", "HS"),
     (r"\b(?:as needed|when required|for pain|sos)\b", "SOS"),
     (r"\b(?:immediately|stat)\b", "STAT"),
 ]
@@ -156,10 +168,10 @@ FREQ_PATTERNS = [
 # Standard food timings
 TIMING_PATTERNS = [
     (r"\b(?:before breakfast|khali pet|subah khali pet|empty stomach)\b", "before breakfast"),
-    (r"\b(?:before food|before meals|khana khane se pehle|ac)\b", "before food"),
+    (r"\b(?:before food|before meals|khana khane se pehle|oota munche|ootakku munche|ootakkinta modalu|ac)\b", "before food"),
     (r"\b(?:after food|after meals|khana khane ke baad|oota aadmele|food aadmele|dadmalae|aadmele|pc)\b", "after food"),
     (r"\b(?:with food|during meals)\b", "with food"),
-    (r"\b(?:at bedtime|night|at night|hs)\b", "at bedtime"),
+    (r"\b(?:at bedtime|night|at night|raat ko|raathri|raatri|hs)\b", "at bedtime"),
 ]
 
 # Routes
@@ -338,7 +350,7 @@ class ClinicalExtractor:
         else:
             symp_match = (
                 re.search(
-                    r"\b((?:diary\s+of|diarrhea|diarrhoea|dysentery|dessentry|dissing\s+tree|loose\s+motion|lose\s+motion|luzmotion|fever|acidity|headache|vomiting|cough|breathlessness)(?:[,\s]+(?:and|from|for|since|of)[,\s]+)?(?:body\s+ache|gas\s+ban\s+rahi\s+hai|gastric\s+pain)?(?:\s*(?:from|for|since|of)?\s*(?:\d+|one|two|three|four|five|six|seven|eight|nine|ten|teen|do|ek|char|paanch)\s*(?:days?|weeks?|months?|din|hafte|week|month))?)\b",
+                    r"\b((?:diary\s+of|diarrhea|diarrhoea|dysentery|dessentry|dissing\s+tree|loose\s+motion|lose\s+motion|luzmotion|fever|jwara|bukhar|acidity|headache|tale\s+novu|sardard|sar\s+dard|vomiting|ulti|cough|khansi|kasa|kaasa|breathlessness|pet\s+mein\s+dard|pet\s+dard|hotte\s+novu)(?:[,\s]+(?:and|from|for|since|of)[,\s]+)?(?:body\s+ache|gas\s+ban\s+rahi\s+hai|gastric\s+pain)?(?:\s*(?:from|for|since|of)?\s*(?:\d+|one|two|three|four|five|six|seven|eight|nine|ten|teen|do|ek|char|paanch|ondhu|eradu|mooru|naalku|aidu)\s*(?:days?|weeks?|months?|din|hafte|dina|dinagalu|vaara|week|month))?)\b",
                     text,
                     re.I,
                 )
@@ -715,16 +727,18 @@ class ClinicalExtractor:
         dur_status = "not_mentioned"
 
         dur_match = (
-            re.search(r"\b(?:for\s+)?(\d+|one|two|three|four|five|six|seven|eight|nine|ten|14|30)\s*(days?|weeks?|months?)\b", clause, re.I)
-            or re.search(r"\b(\d+|teen|do|ek|char|paanch)\s*(?:din|hafte)\b", clause, re.I)
+            re.search(r"\b(?:for\s+)?(\d+|one|two|three|four|five|six|seven|eight|nine|ten|14|30|ek|do|teen|char|paanch|ondhu|eradu|mooru|naalku|aidu)\s*(days?|weeks?|months?)\b", clause, re.I)
+            or re.search(r"\b(\d+|teen|do|ek|char|paanch|ondhu|eradu|mooru|naalku|aidu)\s*(?:din|hafte|dina|dinagalu|vaara)\b", clause, re.I)
             or re.search(r"\b(\d+\s*days?)\b", clause, re.I)
         )
         if dur_match:
             num_w = dur_match.group(1).lower()
             num_val = WORD_TO_NUMBER.get(num_w, num_w)
             unit_w = dur_match.group(2).lower() if len(dur_match.groups()) > 1 and dur_match.group(2) else "days"
-            if "din" in clause.lower():
+            if any(k in clause.lower() for k in ("din", "dina", "dinagalu")):
                 unit_w = "days"
+            elif any(k in clause.lower() for k in ("hafte", "vaara")):
+                unit_w = "weeks"
             dur_val = f"{num_val} {unit_w}"
             dur_source = dur_match.group(0).strip()
             dur_status = "extracted"

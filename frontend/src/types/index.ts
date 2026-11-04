@@ -61,12 +61,17 @@ export interface Prescription {
   clinical: ClinicalInfo;
   medicines: MedicineItem[];
   raw_transcript: string | null;
+  edited_transcript?: string | null;
+  patient_id?: string | null;
+  permanent_patient_id?: string | null;
+  pdf_path?: string | null;
   audio_url: string | null;
   validation_issues: ValidationIssue[];
   clarification_questions: ClarificationQuestion[];
   created_at: string;
   updated_at: string;
   confirmed_at: string | null;
+  verified_at?: string | null;
   version: number;
 }
 

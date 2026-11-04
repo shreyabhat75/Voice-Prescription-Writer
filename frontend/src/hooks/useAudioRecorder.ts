@@ -15,7 +15,7 @@ export interface UseAudioRecorderReturn {
   resetRecording: () => void;
 }
 
-export function useAudioRecorder(): UseAudioRecorderReturn {
+export function useAudioRecorder(options?: { onChunk?: (chunk: Blob) => void }): UseAudioRecorderReturn {
   const [isRecording, setIsRecording] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [duration, setDuration] = useState(0);
@@ -23,6 +23,9 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [permissionStatus, setPermissionStatus] = useState<'prompt' | 'granted' | 'denied' | 'unsupported'>('prompt');
+
+  const onChunkRef = useRef(options?.onChunk);
+  onChunkRef.current = options?.onChunk;
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const timerRef = useRef<any>(null);
@@ -98,6 +101,9 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
       recorder.ondataavailable = (event) => {
         if (event.data && event.data.size > 0) {
           chunksRef.current.push(event.data);
+          if (onChunkRef.current) {
+            onChunkRef.current(event.data);
+          }
         }
       };
 

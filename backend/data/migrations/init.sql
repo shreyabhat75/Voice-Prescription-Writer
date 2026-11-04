@@ -1,21 +1,40 @@
 -- Voice Prescription Writer – database initialisation
 -- All tables use TEXT primary keys (UUIDs generated in application code).
 
+CREATE TABLE IF NOT EXISTS patients (
+    id              TEXT PRIMARY KEY,
+    patient_id      TEXT UNIQUE NOT NULL,
+    name            TEXT NOT NULL,
+    age             INTEGER,
+    gender          TEXT,
+    mobile_number   TEXT,
+    created_at      TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at      TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_patients_pid ON patients(patient_id);
+CREATE INDEX IF NOT EXISTS idx_patients_mobile ON patients(mobile_number);
+
 CREATE TABLE IF NOT EXISTS prescriptions (
     id              TEXT PRIMARY KEY,
+    patient_id      TEXT,
     status          TEXT NOT NULL DEFAULT 'recording'
         CHECK (status IN ('recording','transcribing','structuring','review','confirmed')),
     patient_json    TEXT NOT NULL DEFAULT '{}',
     clinical_json   TEXT NOT NULL DEFAULT '{}',
     raw_transcript  TEXT,
+    edited_transcript TEXT,
     audio_url       TEXT,
+    pdf_path        TEXT,
     validation_json TEXT NOT NULL DEFAULT '[]',
     clarification_json TEXT NOT NULL DEFAULT '[]',
     version         INTEGER NOT NULL DEFAULT 1,
     created_at      TEXT NOT NULL DEFAULT (datetime('now')),
     updated_at      TEXT NOT NULL DEFAULT (datetime('now')),
-    confirmed_at    TEXT
+    confirmed_at    TEXT,
+    verified_at     TEXT,
+    FOREIGN KEY (patient_id) REFERENCES patients(id) ON DELETE SET NULL
 );
+CREATE INDEX IF NOT EXISTS idx_prescriptions_patient ON prescriptions(patient_id);
 
 CREATE TABLE IF NOT EXISTS medicine_items (
     id              TEXT PRIMARY KEY,
@@ -112,6 +131,22 @@ CREATE TABLE IF NOT EXISTS confirmation_records (
     FOREIGN KEY (prescription_id) REFERENCES prescriptions(id) ON DELETE CASCADE
 );
 CREATE INDEX IF NOT EXISTS idx_confirmation_rx ON confirmation_records(prescription_id);
+
+CREATE TABLE IF NOT EXISTS patient_audit_logs (
+    id              TEXT PRIMARY KEY,
+    prescription_id TEXT,
+    patient_id      TEXT,
+    actor_id        TEXT NOT NULL DEFAULT 'dr_ananya_rao',
+    actor_role      TEXT NOT NULL DEFAULT 'doctor',
+    action          TEXT NOT NULL,
+    details         TEXT,
+    ip_address      TEXT,
+    created_at      TEXT NOT NULL DEFAULT (datetime('now')),
+    FOREIGN KEY (prescription_id) REFERENCES prescriptions(id) ON DELETE CASCADE,
+    FOREIGN KEY (patient_id) REFERENCES patients(id) ON DELETE CASCADE
+);
+CREATE INDEX IF NOT EXISTS idx_audit_prescription ON patient_audit_logs(prescription_id);
+CREATE INDEX IF NOT EXISTS idx_audit_patient ON patient_audit_logs(patient_id);
 
 -- Performance Optimization Indexes
 CREATE INDEX IF NOT EXISTS idx_prescriptions_status_date ON prescriptions(status, updated_at DESC);

@@ -37,6 +37,11 @@ async def websocket_transcribe(websocket: WebSocket, prescription_id: str):
         await websocket.close(code=1008)
         return
 
+    # Extract chosen language from query parameters
+    selected_lang = websocket.query_params.get("language", "en-IN").strip()
+    dg_lang = "kn" if selected_lang == "kn" else "en-IN"
+    dg_model = "nova-2" if dg_lang == "kn" else "nova-2-medical"
+
     settings = get_settings()
     upload_dir = Path(settings.UPLOAD_DIR)
     upload_dir.mkdir(parents=True, exist_ok=True)
@@ -45,6 +50,7 @@ async def websocket_transcribe(websocket: WebSocket, prescription_id: str):
     final_transcript_parts: list[str] = []
     deepgram_ws = None
     receiver_task_handle = None
+    auto_structure_requested = False
 
     # Connect to Deepgram Live Streaming if API key is present
     use_deepgram = bool(settings.DEEPGRAM_API_KEY and settings.STT_PROVIDER.lower() == "deepgram")
@@ -54,21 +60,21 @@ async def websocket_transcribe(websocket: WebSocket, prescription_id: str):
             import websockets
 
             headers = {"Authorization": f"Token {settings.DEEPGRAM_API_KEY}"}
-            # Attempt nova-2-medical first, fall back to nova-2
             dg_url = (
-                "wss://api.deepgram.com/v1/listen?"
-                "model=nova-2-medical&language=en-IN&punctuate=true&interim_results=true&smart_format=true"
+                f"wss://api.deepgram.com/v1/listen?"
+                f"model={dg_model}&language={dg_lang}&punctuate=true&interim_results=true&smart_format=true"
             )
 
             try:
                 deepgram_ws = await websockets.connect(dg_url, additional_headers=headers)
             except Exception:
-                logger.warning("Could not connect to nova-2-medical, falling back to nova-2...")
-                dg_url = (
-                    "wss://api.deepgram.com/v1/listen?"
-                    "model=nova-2&language=en-IN&punctuate=true&interim_results=true&smart_format=true"
-                )
-                deepgram_ws = await websockets.connect(dg_url, additional_headers=headers)
+                if dg_model != "nova-2":
+                    logger.warning("Could not connect to nova-2-medical, falling back to nova-2...")
+                    dg_url = (
+                        f"wss://api.deepgram.com/v1/listen?"
+                        f"model=nova-2&language={dg_lang}&punctuate=true&interim_results=true&smart_format=true"
+                    )
+                    deepgram_ws = await websockets.connect(dg_url, additional_headers=headers)
 
             async def dg_receiver():
                 try:
@@ -119,7 +125,8 @@ async def websocket_transcribe(websocket: WebSocket, prescription_id: str):
                     ctrl = {"type": message["text"]}
 
                 if ctrl.get("type") in ("stop", "finalize", "eos"):
-                    logger.info("Received stop signal from client for prescription %s", prescription_id)
+                    auto_structure_requested = bool(ctrl.get("auto_structure", False))
+                    logger.info("Received stop signal from client for prescription %s (auto_structure=%s)", prescription_id, auto_structure_requested)
                     break
 
     except WebSocketDisconnect:
@@ -202,34 +209,50 @@ async def websocket_transcribe(websocket: WebSocket, prescription_id: str):
             )
         await db.commit()
 
-    # Trigger automatic structuring if transcript is available
+    # Send completion notification to client
     if full_transcript:
-        try:
-            structured_rx = await svc.structure_prescription(prescription_id, transcript_override=full_transcript)
+        if auto_structure_requested:
+            try:
+                structured_rx = await svc.structure_prescription(prescription_id, transcript_override=full_transcript)
+                try:
+                    await websocket.send_json({
+                        "type": "completed",
+                        "transcript": full_transcript,
+                        "raw_transcript": full_transcript,
+                        "prescription": structured_rx.model_dump(mode="json"),
+                    })
+                except Exception:
+                    pass
+            except Exception as e:
+                logger.error("Failed to structure streamed prescription: %s", e)
+                try:
+                    await websocket.send_json({
+                        "type": "error",
+                        "message": f"Structuring failed: {e}",
+                        "transcript": full_transcript,
+                        "raw_transcript": full_transcript,
+                    })
+                except Exception:
+                    pass
+        else:
+            # Standard doctor review & edit workflow before extraction
             try:
                 await websocket.send_json({
-                    "type": "completed",
+                    "type": "transcription_complete",
                     "transcript": full_transcript,
-                    "prescription": structured_rx.model_dump(mode="json"),
-                })
-            except Exception:
-                pass
-        except Exception as e:
-            logger.error("Failed to structure streamed prescription: %s", e)
-            try:
-                await websocket.send_json({
-                    "type": "error",
-                    "message": f"Structuring failed: {e}",
-                    "transcript": full_transcript,
+                    "raw_transcript": full_transcript,
+                    "audio_url": audio_url,
+                    "message": "Live speech recognition complete. You can review or edit the transcript before generating clinical prescription.",
                 })
             except Exception:
                 pass
     else:
         try:
             await websocket.send_json({
-                "type": "completed",
+                "type": "transcription_complete",
                 "transcript": "",
-                "message": "Audio saved but no speech detected.",
+                "raw_transcript": "",
+                "message": "Audio saved but no clear speech was recognized. Please try dictating again.",
             })
         except Exception:
             pass

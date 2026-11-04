@@ -6,6 +6,7 @@ Strictly enforces doctor confirmation gate before rendering final PDF.
 from __future__ import annotations
 
 import os
+import re
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -33,12 +34,40 @@ class PrescriptionPDFGenerator:
         self.output_dir = Path(output_dir or settings.PDF_OUTPUT_DIR)
         self.output_dir.mkdir(parents=True, exist_ok=True)
 
+    @staticmethod
+    def get_pdf_download_filename(
+        patient_name: str | None,
+        rx_date_str: str | None = None,
+        prescription_id: str = "",
+    ) -> str:
+        """Format sanitized filename as PatientName_YYYY-MM-DD.pdf per clinical requirements."""
+        clean_name = (patient_name or "").strip()
+        if not clean_name or clean_name.lower() in ("demo patient", "unnamed patient", "not specified"):
+            clean_name = f"Prescription_{prescription_id[:8]}" if prescription_id else "Prescription"
+        else:
+            # Sanitize spaces and special characters: "Shreya Bhatt" -> "Shreya_Bhatt"
+            clean_name = re.sub(r"[^\w\-]", "_", clean_name)
+            clean_name = re.sub(r"_+", "_", clean_name).strip("_")
+
+        # Consistent YYYY-MM-DD date
+        date_part = datetime.now().strftime("%Y-%m-%d")
+        if rx_date_str:
+            try:
+                clean_date = rx_date_str.split("T")[0]
+                if len(clean_date) == 10 and clean_date[4] == "-" and clean_date[7] == "-":
+                    date_part = clean_date
+            except Exception:
+                pass
+
+        return f"{clean_name}_{date_part}.pdf"
+
     def generate(
         self,
         prescription: PrescriptionResponse,
         clinic_name: str = "Apex Healthcare Multispecialty Clinic",
         doctor_name: str = "Dr. Ananya Rao, MD (General Medicine)",
         reg_number: str = "MCI-IND-849204",
+        patient_id: str | None = None,
     ) -> str:
         """Generate a PDF for the prescription.
 
@@ -127,19 +156,20 @@ class PrescriptionPDFGenerator:
         # 2. Patient Demographics & Date Box
         date_str = datetime.now().strftime("%d %b %Y, %I:%M %p")
         p_name = prescription.patient.name.value or "Not Specified"
-        p_age = prescription.patient.age.value if prescription.patient.age.value is not None else "--"
-        p_sex = (prescription.patient.sex.value or "--").title()
+        p_age = f"{prescription.patient.age.value} yrs" if prescription.patient.age.value is not None else "Not provided"
+        p_sex = (prescription.patient.sex.value or "Not provided").title()
+        pid_display = patient_id or prescription.permanent_patient_id or "--"
 
         demographics_data = [
             [
                 Paragraph(f"<b>Patient Name:</b> {p_name}", body_style),
-                Paragraph(f"<b>Age / Sex:</b> {p_age} yrs / {p_sex}", body_style),
-                Paragraph(f"<b>Date:</b> {date_str}", body_style),
+                Paragraph(f"<b>Patient ID:</b> {pid_display}", body_style),
+                Paragraph(f"<b>Age / Sex:</b> {p_age} / {p_sex}", body_style),
             ],
             [
                 Paragraph(f"<b>Prescription ID:</b> #{prescription.id[:8]}", body_style),
-                Paragraph(f"<b>Version:</b> v{prescription.version} (Confirmed)", body_style),
-                Paragraph(f"<b>Confirmed At:</b> {prescription.confirmed_at or date_str}", body_style),
+                Paragraph(f"<b>Date:</b> {date_str}", body_style),
+                Paragraph(f"<b>Status:</b> Verified (v{prescription.version})", body_style),
             ]
         ]
         demo_table = Table(demographics_data, colWidths=[200, 160, 180])
@@ -201,7 +231,7 @@ class PrescriptionPDFGenerator:
             ]
             med_rows.append(row)
 
-        med_table = Table(med_rows, colWidths=[20, 130, 60, 50, 90, 130, 60])
+        med_table = Table(med_rows, colWidths=[20, 130, 60, 50, 90, 130, 60], repeatRows=1)
         med_table.setStyle(TableStyle([
             ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1e3a8a")),
             ("ALIGN", (0, 0), (-1, -1), "LEFT"),

@@ -7,7 +7,7 @@ from pathlib import Path
 from fastapi import APIRouter, HTTPException, status
 from fastapi.responses import FileResponse
 
-from backend.services.pdf.pdf_generator import PDFGenerationError
+from backend.services.pdf.pdf_generator import PDFGenerationError, PrescriptionPDFGenerator
 from backend.services.prescription_service import PrescriptionService
 
 logger = logging.getLogger(__name__)
@@ -39,10 +39,16 @@ async def download_prescription_pdf(prescription_id: str):
 
     try:
         pdf_path = await svc.generate_pdf(prescription_id)
-        file_name = Path(pdf_path).name
+        patient_name = rx.patient.name.value if (rx.patient and rx.patient.name) else None
+        rx_date = rx.confirmed_at or rx.created_at
+        download_name = PrescriptionPDFGenerator.get_pdf_download_filename(
+            patient_name=patient_name,
+            rx_date_str=rx_date,
+            prescription_id=prescription_id,
+        )
         return FileResponse(
             path=pdf_path,
-            filename=file_name,
+            filename=download_name,
             media_type="application/pdf",
         )
     except PDFGenerationError as e:

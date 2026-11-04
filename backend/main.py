@@ -17,6 +17,8 @@ from backend.routers.confirmation import router as confirmation_router
 from backend.routers.editing import router as editing_router
 from backend.routers.feedback import router as feedback_router
 from backend.routers.history import router as history_router
+from backend.routers.patients import router as patients_router
+from backend.routers.patient_features import router as patient_features_router
 from backend.routers.pdf import router as pdf_router
 from backend.routers.prescriptions import router as prescriptions_router
 from backend.routers.structuring import router as structuring_router
@@ -72,6 +74,8 @@ app.include_router(confirmation_router)
 app.include_router(pdf_router)
 app.include_router(feedback_router)
 app.include_router(history_router)
+app.include_router(patients_router)
+app.include_router(patient_features_router)
 app.include_router(ws_stream_router)
 
 

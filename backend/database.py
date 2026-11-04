@@ -110,6 +110,19 @@ async def init_db(db_path: str | None = None) -> None:
         if _db_path != ":memory:":
             db._conn.execute("PRAGMA journal_mode=WAL;")
         await db.executescript(migration_sql)
+
+        # Migrate existing tables for new columns gracefully
+        for col_name, col_type in [
+            ("patient_id", "TEXT"),
+            ("edited_transcript", "TEXT"),
+            ("pdf_path", "TEXT"),
+            ("verified_at", "TEXT"),
+        ]:
+            try:
+                db._conn.execute(f"ALTER TABLE prescriptions ADD COLUMN {col_name} {col_type};")
+            except sqlite3.OperationalError:
+                pass
+
         await db.commit()
 
     logger.info("Database initialised at %s", _db_path)

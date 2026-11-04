@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Mic,
@@ -10,7 +10,10 @@ import {
   RotateCcw,
   CheckCircle2,
   AlertTriangle,
-  UploadCloud,
+  FileText,
+  Languages,
+  Edit3,
+  Radio,
 } from 'lucide-react';
 import { apiClient } from '../api/client';
 import { useAudioRecorder } from '../hooks/useAudioRecorder';
@@ -20,6 +23,27 @@ import { LoadingSpinner } from '../components/ui/LoadingSpinner';
 
 export const NewPrescription: React.FC = () => {
   const navigate = useNavigate();
+
+  const [selectedLanguage, setSelectedLanguage] = useState<'en-IN' | 'hinglish' | 'kanglish' | 'kn'>('en-IN');
+  const [processingStep, setProcessingStep] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  // Live streaming captions state
+  const [finalizedText, setFinalizedText] = useState<string>('');
+  const [interimText, setInterimText] = useState<string>('');
+  const [transcriptStage, setTranscriptStage] = useState<'recording' | 'review' | 'idle'>('idle');
+  const [editedTranscript, setEditedTranscript] = useState<string>('');
+  const [activePrescriptionId, setActivePrescriptionId] = useState<string | null>(null);
+
+  const wsRef = useRef<WebSocket | null>(null);
+
+  // Stream each 200ms audio buffer to the WebSocket
+  const handleAudioChunk = (chunk: Blob) => {
+    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+      wsRef.current.send(chunk);
+    }
+  };
+
   const {
     isRecording,
     isPaused,
@@ -27,20 +51,14 @@ export const NewPrescription: React.FC = () => {
     audioBlob,
     audioUrl,
     error: micError,
-    permissionStatus,
     startRecording,
     stopRecording,
     pauseRecording,
     resumeRecording,
     resetRecording,
-  } = useAudioRecorder();
+  } = useAudioRecorder({ onChunk: handleAudioChunk });
 
-  const [processingStep, setProcessingStep] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [transcribedText, setTranscribedText] = useState<string | null>(null);
-  const [activePrescriptionId, setActivePrescriptionId] = useState<string | null>(null);
-
-  // 7 Assignment Reference Dictation Scenarios
+  // 7 Clinical Assignment Reference Dictation Scenarios
   const sampleScripts = [
     {
       id: 'script_1',
@@ -86,35 +104,125 @@ export const NewPrescription: React.FC = () => {
     },
   ];
 
-  const handleProcessRecording = async (blob: Blob) => {
+  const handleStartLiveRecording = async () => {
     setError(null);
+    setFinalizedText('');
+    setInterimText('');
+    setEditedTranscript('');
+    setTranscriptStage('recording');
+
     try {
-      setProcessingStep('1/3 Creating prescription draft record...');
+      // 1. Create prescription draft record
       const rx = await apiClient.createPrescription();
       setActivePrescriptionId(rx.id);
 
-      setProcessingStep('2/3 Uploading audio recording (multipart/form-data)...');
-      await apiClient.uploadAudio(rx.id, blob);
+      // 2. Open bidirectional live streaming WebSocket
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const host = window.location.host;
+      const wsUrl = `${protocol}//${host}/ws/transcribe/${rx.id}?language=${selectedLanguage}`;
 
-      setProcessingStep('3/3 Transcribing audio and running AI structuring...');
-      const transcribedRx = await apiClient.transcribe(rx.id);
-      setTranscribedText(transcribedRx.raw_transcript);
+      const ws = new WebSocket(wsUrl);
+      wsRef.current = ws;
 
-      await apiClient.structurePrescription(rx.id);
+      ws.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          if (data.type === 'transcript') {
+            if (data.is_final) {
+              setFinalizedText((prev) => (prev ? prev + ' ' : '') + data.text);
+              setInterimText('');
+            } else {
+              setInterimText(data.text);
+            }
+          } else if (data.type === 'transcription_complete') {
+            const complete = data.transcript || data.raw_transcript || '';
+            setFinalizedText(complete);
+            setInterimText('');
+            setEditedTranscript(complete);
+            setTranscriptStage('review');
+          } else if (data.type === 'error') {
+            setError(data.message || 'Streaming transcription encountered an issue.');
+          }
+        } catch (e) {
+          console.debug('WebSocket non-JSON event:', e);
+        }
+      };
 
-      // Auto-navigate to review
-      navigate(`/prescription/${rx.id}`);
+      ws.onerror = (e) => {
+        console.warn('Live WebSocket stream fallback to standard upload:', e);
+      };
+
+      // 3. Start audio capture
+      await startRecording();
     } catch (err: any) {
-      console.error(err);
-      setError(err.response?.data?.detail || err.message || 'Processing failed. Check backend connectivity.');
-      setProcessingStep(null);
+      console.error('Failed to start recording:', err);
+      setError(err.message || 'Microphone access failed. Please ensure microphone permissions are granted.');
+      setTranscriptStage('idle');
     }
   };
 
-  const handleStopAndProcess = async () => {
+  const handleStopLiveRecording = async () => {
     const blob = await stopRecording();
-    if (blob) {
-      await handleProcessRecording(blob);
+
+    // Signal WebSocket to finalize audio and complete stream
+    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+      wsRef.current.send(JSON.stringify({ type: 'stop', auto_structure: false }));
+    }
+
+    // Fallback: If WebSocket didn't capture or disconnected, upload blob directly
+    if (activePrescriptionId && blob) {
+      setTimeout(async () => {
+        if (!editedTranscript && !finalizedText) {
+          try {
+            setProcessingStep('Finalizing transcription...');
+            await apiClient.uploadAudio(activePrescriptionId, blob);
+            const transcribedRx = await apiClient.transcribe(activePrescriptionId);
+            const text = transcribedRx.raw_transcript || '';
+            setFinalizedText(text);
+            setEditedTranscript(text);
+            setTranscriptStage('review');
+            setProcessingStep(null);
+          } catch (e: any) {
+            setError(e.message || 'Transcription fallback failed.');
+            setProcessingStep(null);
+          }
+        } else {
+          setTranscriptStage('review');
+        }
+      }, 800);
+    } else {
+      setTranscriptStage('review');
+    }
+  };
+
+  const handleCancelAndReRecord = () => {
+    if (wsRef.current) {
+      try {
+        wsRef.current.close();
+      } catch (e) {}
+      wsRef.current = null;
+    }
+    resetRecording();
+    setFinalizedText('');
+    setInterimText('');
+    setEditedTranscript('');
+    setTranscriptStage('idle');
+    setActivePrescriptionId(null);
+    setError(null);
+  };
+
+  const handleExecuteStructuring = async () => {
+    if (!activePrescriptionId) return;
+    setError(null);
+    try {
+      setProcessingStep('AI structuring clinical fields and running evidence validation...');
+      const transcriptToProcess = editedTranscript.trim() || finalizedText.trim();
+      await apiClient.structurePrescription(activePrescriptionId, transcriptToProcess);
+      navigate(`/prescription/${activePrescriptionId}`);
+    } catch (err: any) {
+      console.error(err);
+      setError(err.response?.data?.detail || err.message || 'Structuring failed.');
+      setProcessingStep(null);
     }
   };
 
@@ -150,12 +258,11 @@ export const NewPrescription: React.FC = () => {
           Medical Voice Dictation
         </h1>
         <p className="text-xs text-slate-500 max-w-lg mx-auto">
-          Dictate medications, clinical notes, and instructions naturally. The AI structures and
-          validates every field with source-grounded evidence.
+          Dictate medications, clinical findings, and advice naturally. Live captions display recognized speech in real time with doctor review before AI structuring.
         </p>
       </div>
 
-      <StepIndicator currentStatus={processingStep ? 'structuring' : 'recording'} />
+      <StepIndicator currentStatus={processingStep ? 'structuring' : (transcriptStage === 'review' ? 'review' : 'recording')} />
 
       {/* Main Recording Station */}
       <div className="bg-white rounded-2xl border border-slate-200 p-8 shadow-xs flex flex-col items-center justify-center space-y-6 relative">
@@ -164,18 +271,117 @@ export const NewPrescription: React.FC = () => {
             <LoadingSpinner size="lg" />
             <p className="text-sm font-bold text-blue-900">{processingStep}</p>
             <p className="text-xs text-slate-400 max-w-md">
-              Running speech-to-text, medical shorthand normalization (OD, BD, TDS, 1-0-1), and
-              source-grounded validation...
+              Running medical entity extraction, shorthand normalization (OD, BD, TDS, 1-0-1), and source-grounded validation...
             </p>
           </div>
+        ) : transcriptStage === 'review' ? (
+          /* Doctor Review & Editable Transcript Screen */
+          <div className="w-full max-w-2xl bg-slate-50/50 border border-blue-200 rounded-2xl p-6 shadow-sm space-y-4">
+            <div className="flex items-center justify-between pb-2 border-b border-slate-200">
+              <div className="flex items-center gap-2">
+                <FileText className="w-5 h-5 text-blue-600" />
+                <h3 className="text-sm font-bold text-slate-900">Doctor Transcript Review & Edit</h3>
+              </div>
+              <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 flex items-center gap-1">
+                <Edit3 className="w-3 h-3" />
+                Edit Before AI Extraction
+              </span>
+            </div>
+
+            <p className="text-xs text-slate-600 leading-relaxed">
+              Review the live transcription captured below. You can directly correct any spoken names or instructions. The original transcript will be preserved alongside your edits.
+            </p>
+
+            <textarea
+              value={editedTranscript || finalizedText}
+              onChange={(e) => setEditedTranscript(e.target.value)}
+              rows={5}
+              placeholder="Dictated transcript will appear here..."
+              className="w-full p-3.5 text-xs font-mono bg-white border border-slate-300 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-100 text-slate-800 leading-relaxed resize-y shadow-inner"
+            />
+
+            {audioUrl && (
+              <div className="flex items-center gap-2 px-3 py-2 bg-white rounded-lg border border-slate-200">
+                <Volume2 className="w-4 h-4 text-slate-500 shrink-0" />
+                <audio src={audioUrl} controls className="w-full h-7" />
+              </div>
+            )}
+
+            <div className="flex items-center justify-between pt-2">
+              <button
+                type="button"
+                onClick={handleCancelAndReRecord}
+                className="text-xs font-semibold text-slate-500 hover:text-slate-800 cursor-pointer flex items-center gap-1"
+              >
+                <RotateCcw className="w-3.5 h-3.5" /> Cancel & Re-record
+              </button>
+
+              <button
+                type="button"
+                onClick={handleExecuteStructuring}
+                disabled={!(editedTranscript || finalizedText).trim()}
+                className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-xs transition-all cursor-pointer disabled:opacity-50"
+              >
+                <Sparkles className="w-4 h-4" />
+                Generate Clinical Prescription Draft
+              </button>
+            </div>
+          </div>
         ) : (
+          /* Live Dictation & Captions Screen */
           <>
+            {/* Language Selector */}
+            <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 shadow-2xs">
+              <Languages className="w-4 h-4 text-blue-600" />
+              <span className="text-xs font-semibold text-slate-700">Dictation Language:</span>
+              <select
+                value={selectedLanguage}
+                onChange={(e) => setSelectedLanguage(e.target.value as any)}
+                disabled={isRecording}
+                className="text-xs font-semibold bg-white border border-slate-300 rounded-lg px-2 py-1 text-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              >
+                <option value="en-IN">English (Indian)</option>
+                <option value="hinglish">Hinglish (Hindi + English)</option>
+                <option value="kanglish">Kanglish (Kannada + English)</option>
+                <option value="kn">Kannada (Native Script)</option>
+              </select>
+            </div>
+
             {/* Microphone Button */}
             <RecordButton
               isRecording={isRecording}
-              onStart={startRecording}
-              onStop={handleStopAndProcess}
+              onStart={handleStartLiveRecording}
+              onStop={handleStopLiveRecording}
             />
+
+            {/* Live Captions Box (Active during recording) */}
+            {isRecording && (
+              <div className="w-full max-w-xl bg-slate-900 text-white p-4 rounded-xl shadow-inner border border-slate-800 space-y-2.5 transition-all">
+                <div className="flex items-center justify-between text-xs text-slate-400 border-b border-slate-800 pb-2">
+                  <span className="flex items-center gap-1.5 font-semibold text-emerald-400">
+                    <Radio className="w-3.5 h-3.5 animate-pulse text-emerald-400" />
+                    Live Captions ({selectedLanguage.toUpperCase()})
+                  </span>
+                  <span className="text-[10px] uppercase tracking-wider text-slate-500 font-mono">
+                    Deepgram Streaming Nova-2
+                  </span>
+                </div>
+
+                <div className="text-xs font-medium leading-relaxed max-h-32 overflow-y-auto pr-1">
+                  {finalizedText ? (
+                    <span className="text-slate-100">{finalizedText} </span>
+                  ) : null}
+                  {interimText ? (
+                    <span className="text-indigo-300 italic bg-indigo-950/80 px-1 py-0.5 rounded border border-indigo-800/50 animate-pulse">
+                      {interimText}
+                    </span>
+                  ) : null}
+                  {!finalizedText && !interimText ? (
+                    <span className="text-slate-500 italic">Listening... Speak patient name, symptoms, and medications...</span>
+                  ) : null}
+                </div>
+              </div>
+            )}
 
             {/* Recording Controls & Timer */}
             {isRecording && (
@@ -206,7 +412,7 @@ export const NewPrescription: React.FC = () => {
 
                   <button
                     type="button"
-                    onClick={resetRecording}
+                    onClick={handleCancelAndReRecord}
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-rose-600 hover:bg-rose-50 rounded-lg cursor-pointer transition-colors border border-rose-200"
                   >
                     <RotateCcw className="w-3.5 h-3.5" /> Cancel Dictation
@@ -222,42 +428,12 @@ export const NewPrescription: React.FC = () => {
                 <span>{micError || error}</span>
               </div>
             )}
-
-            {/* Audio Preview after recording stops */}
-            {audioUrl && !isRecording && (
-              <div className="w-full max-w-md bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
-                    <Volume2 className="w-4 h-4 text-blue-600" />
-                    Recording Preview ({formatTimer(duration)})
-                  </span>
-                  <button
-                    type="button"
-                    onClick={resetRecording}
-                    className="text-xs text-slate-400 hover:text-slate-600 cursor-pointer"
-                  >
-                    Discard
-                  </button>
-                </div>
-                <audio src={audioUrl} controls className="w-full h-8" />
-                {audioBlob && (
-                  <button
-                    type="button"
-                    onClick={() => handleProcessRecording(audioBlob)}
-                    className="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold flex items-center justify-center gap-2 shadow-xs transition-all cursor-pointer"
-                  >
-                    <UploadCloud className="w-4 h-4" />
-                    Process & Structure This Recording
-                  </button>
-                )}
-              </div>
-            )}
           </>
         )}
       </div>
 
       {/* 7 Assignment Reference Presets for Testing & Demonstration */}
-      {!processingStep && (
+      {!processingStep && transcriptStage !== 'review' && (
         <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-3">
           <div className="flex items-center gap-2 pb-2.5 border-b border-slate-100">
             <Sparkles className="w-5 h-5 text-indigo-600" />
