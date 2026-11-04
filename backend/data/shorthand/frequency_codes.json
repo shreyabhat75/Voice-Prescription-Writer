@@ -1,0 +1,14 @@
+{
+  "OD": {"full": "Once Daily", "latin": "Omni Die", "times_per_day": 1},
+  "BD": {"full": "Twice Daily", "latin": "Bis Die", "times_per_day": 2},
+  "TDS": {"full": "Three Times Daily", "latin": "Ter Die Sumendum", "times_per_day": 3},
+  "QID": {"full": "Four Times Daily", "latin": "Quater In Die", "times_per_day": 4},
+  "HS": {"full": "At Bedtime", "latin": "Hora Somni", "times_per_day": 1},
+  "SOS": {"full": "As Needed", "latin": "Si Opus Sit", "times_per_day": null},
+  "STAT": {"full": "Immediately", "latin": "Statim", "times_per_day": null},
+  "AC": {"full": "Before Food", "latin": "Ante Cibum"},
+  "PC": {"full": "After Food", "latin": "Post Cibum"},
+  "PRN": {"full": "As Required", "latin": "Pro Re Nata", "times_per_day": null},
+  "QHS": {"full": "Every Bedtime", "latin": "Quaque Hora Somni", "times_per_day": 1},
+  "QD": {"full": "Once Daily", "latin": "Quaque Die", "times_per_day": 1}
+}

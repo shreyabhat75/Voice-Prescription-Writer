@@ -1,0 +1,211 @@
+{
+  "medicines": [
+    {
+      "canonical_name": "Pan-D",
+      "generic_name": "Pantoprazole + Domperidone",
+      "brand_names": ["Pan-D", "Pantocid D", "Pantodac D"],
+      "aliases": [
+        "pandy",
+        "pandi",
+        "pinedi",
+        "pindy",
+        "double pandy",
+        "double pan-d",
+        "pan d",
+        "finally"
+      ],
+      "candidate_matches": ["Pan-D", "Double Pan-D"],
+      "default_form": "capsule",
+      "default_route": "oral",
+      "requires_confirmation_for": ["pandy", "pandi", "double pandy", "double pan-d", "pinedi", "pindy", "finally"]
+    },
+    {
+      "canonical_name": "Dolo",
+      "generic_name": "Paracetamol",
+      "brand_names": ["Dolo", "Dolo 650", "Dolo 500", "Calpol", "Crocin"],
+      "aliases": [
+        "dolo",
+        "dolo 650",
+        "dolo 500",
+        "dolo 2"
+      ],
+      "candidate_matches": ["Dolo 650", "Dolo 500"],
+      "default_form": "tablet",
+      "default_route": "oral",
+      "requires_confirmation_for": ["dolo 2"]
+    },
+    {
+      "canonical_name": "Paracetamol",
+      "generic_name": "Paracetamol",
+      "brand_names": ["Paracetamol", "Calpol", "Crocin", "Pacimol"],
+      "aliases": [
+        "paracetamol",
+        "parasautomal",
+        "peresautomal",
+        "peresautomalt"
+      ],
+      "candidate_matches": ["Paracetamol"],
+      "default_form": "tablet",
+      "default_route": "oral",
+      "requires_confirmation_for": ["parasautomal", "peresautomal", "peresautomalt"]
+    },
+    {
+      "canonical_name": "Montelukast",
+      "generic_name": "Montelukast Sodium",
+      "brand_names": ["Montelukast", "Montair", "Montair LC", "Monticope", "Romilast"],
+      "aliases": [
+        "montelukast",
+        "montelucas",
+        "montelcast",
+        "montalcast",
+        "montelka",
+        "montalca",
+        "panty lucas",
+        "panty lucas t",
+        "monttull",
+        "pantoste"
+      ],
+      "candidate_matches": ["Montelukast", "Montair LC"],
+      "default_form": "tablet",
+      "default_route": "oral",
+      "requires_confirmation_for": ["montelucas", "montelcast", "montalcast", "montelka", "panty lucas", "panty lucas t", "monttull", "pantoste"]
+    },
+    {
+      "canonical_name": "Benadryl",
+      "generic_name": "Diphenhydramine",
+      "brand_names": ["Benadryl", "Benadryl DR"],
+      "aliases": [
+        "benadryl",
+        "benedrill",
+        "benetril",
+        "penadryl"
+      ],
+      "candidate_matches": ["Benadryl"],
+      "default_form": "syrup",
+      "default_route": "oral",
+      "requires_confirmation_for": ["benedrill", "benetril", "penadryl"]
+    },
+    {
+      "canonical_name": "Pantoprazole",
+      "generic_name": "Pantoprazole",
+      "brand_names": ["Pantoprazole", "Pantocid", "Pan 40", "Pantodac"],
+      "aliases": [
+        "pantoprazole",
+        "pantocid",
+        "pan 40"
+      ],
+      "candidate_matches": ["Pantoprazole 40mg", "Pantocid 40"],
+      "default_form": "tablet",
+      "default_route": "oral",
+      "requires_confirmation_for": []
+    },
+    {
+      "canonical_name": "Cetirizine",
+      "generic_name": "Cetirizine Hydrochloride",
+      "brand_names": ["Cetirizine", "Cetzine", "Alerid", "Okacet", "Zyrtec"],
+      "aliases": [
+        "cetirizine",
+        "cetzine",
+        "alerid"
+      ],
+      "candidate_matches": ["Cetirizine 10mg"],
+      "default_form": "tablet",
+      "default_route": "oral",
+      "requires_confirmation_for": []
+    },
+    {
+      "canonical_name": "Azithromycin",
+      "generic_name": "Azithromycin",
+      "brand_names": ["Azithromycin", "Azithral", "Azee", "Zithromax"],
+      "aliases": [
+        "azithromycin",
+        "azithral",
+        "azee"
+      ],
+      "candidate_matches": ["Azithromycin 500mg"],
+      "default_form": "tablet",
+      "default_route": "oral",
+      "requires_confirmation_for": []
+    },
+    {
+      "canonical_name": "Augmentin",
+      "generic_name": "Amoxicillin and Potassium Clavulanate",
+      "brand_names": ["Augmentin", "Moxikind-CV", "Clavam"],
+      "aliases": [
+        "augmentin",
+        "amoxicillin clavulanate",
+        "clavam"
+      ],
+      "candidate_matches": ["Augmentin 625mg"],
+      "default_form": "tablet",
+      "default_route": "oral",
+      "requires_confirmation_for": []
+    },
+    {
+      "canonical_name": "Combiflam",
+      "generic_name": "Ibuprofen and Paracetamol",
+      "brand_names": ["Combiflam", "Ibugesic Plus"],
+      "aliases": [
+        "combiflam",
+        "ibugesic plus"
+      ],
+      "candidate_matches": ["Combiflam"],
+      "default_form": "tablet",
+      "default_route": "oral",
+      "requires_confirmation_for": []
+    },
+    {
+      "canonical_name": "Telma AM",
+      "generic_name": "Telmisartan and Amlodipine",
+      "brand_names": ["Telma AM", "Amlong-T"],
+      "aliases": [
+        "telma am",
+        "telma-am",
+        "telma"
+      ],
+      "candidate_matches": ["Telma AM", "Telma 40"],
+      "default_form": "tablet",
+      "default_route": "oral",
+      "requires_confirmation_for": []
+    },
+    {
+      "canonical_name": "Metformin",
+      "generic_name": "Metformin Hydrochloride",
+      "brand_names": ["Metformin", "Glycomet"],
+      "aliases": [
+        "metformin",
+        "glycomet"
+      ],
+      "candidate_matches": ["Metformin 500mg", "Metformin 1000mg"],
+      "default_form": "tablet",
+      "default_route": "oral",
+      "requires_confirmation_for": []
+    },
+    {
+      "canonical_name": "Sucralfate",
+      "generic_name": "Sucralfate",
+      "brand_names": ["Sucralfate", "Sucrafil"],
+      "aliases": [
+        "sucralfate",
+        "sucrafil"
+      ],
+      "candidate_matches": ["Sucralfate Syrup"],
+      "default_form": "syrup",
+      "default_route": "oral",
+      "requires_confirmation_for": []
+    },
+    {
+      "canonical_name": "Domperidone",
+      "generic_name": "Domperidone",
+      "brand_names": ["Domperidone", "Domstal", "Vomitrol"],
+      "aliases": [
+        "domperidone",
+        "domstal"
+      ],
+      "candidate_matches": ["Domperidone 10mg"],
+      "default_form": "tablet",
+      "default_route": "oral",
+      "requires_confirmation_for": []
+    }
+  ]
+}

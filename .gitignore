@@ -1,0 +1,67 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+dist/
+build/
+.eggs/
+*.egg
+venv/
+.venv/
+env/
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Build
+frontend/dist/
+frontend/build/
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Audio uploads
+uploads/
+backend/uploads/
+backend/audio_files/
+*.webm
+*.wav
+*.mp3
+
+# PDF outputs
+pdf_output/
+backend/pdf_output/
+
+# Test
+.coverage
+htmlcov/
+.pytest_cache/
+coverage.xml
+
+# Dataset (large files)
+dataset/*.parquet
+dataset/*.zip
+dataset/*.crdownload
+
