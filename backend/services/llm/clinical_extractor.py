@@ -102,6 +102,9 @@ PHONETIC_DRUG_MAP: dict[str, str] = {
     "parasautomal": "Paracetamol",
     "peresautomalt": "Paracetamol",
     "peresautomal": "Paracetamol",
+    "citrazine": "Cetirizine",
+    "citrizine": "Cetirizine",
+    "cetzine": "Cetirizine",
     "montelicast": "Montelukast",
     "montilucast": "Montelukast",
     "monttull": "Montair LC",
@@ -117,6 +120,8 @@ PHONETIC_DRUG_MAP: dict[str, str] = {
     "montalcast": "Montelukast",
     "pantoste": "Montelukast",
     "finally": "Pan-D",
+    "medicine eight": "Medicine A",
+    "medicine, eight": "Medicine A",
 }
 
 # Non-drug stop words that might follow form prefixes
@@ -140,8 +145,8 @@ FREQ_PATTERNS = [
     (r"\b(?:0-1-1|zero[- ]one[- ]one|011)\b", "0-1-1"),
     (r"\b(?:1-1-0|one[- ]one[- ]zero|110)\b", "1-1-0"),
     (r"\b(?:three times a day|thrice a day|3 times a day|teen baar|tds)\b", "TDS"),
-    (r"\b(?:twice daily|twice a day|2 times a day|do baar|bd|bid|bot)\b", "BD"),
-    (r"\b(?:once daily|once a day|1 time a day|ek baar|subah|od)\b", "OD"),
+    (r"\b(?:twice daily|twice a day|2 times a day|do baar|morning and night|morning and evening|subah shaam|bd|bid|bot)\b", "BD"),
+    (r"\b(?:once daily|once a day|1 time a day|ek baar|subah|in the morning|in morning|morning|od)\b", "OD"),
     (r"\b(?:four times a day|4 times a day|qid)\b", "QID"),
     (r"\b(?:at night|bedtime|raat ko|hs)\b", "HS"),
     (r"\b(?:as needed|when required|for pain|sos)\b", "SOS"),
@@ -152,9 +157,9 @@ FREQ_PATTERNS = [
 TIMING_PATTERNS = [
     (r"\b(?:before breakfast|khali pet|subah khali pet|empty stomach)\b", "before breakfast"),
     (r"\b(?:before food|before meals|khana khane se pehle|ac)\b", "before food"),
-    (r"\b(?:after food|after meals|khana khane ke baad|oota aadmele|pc)\b", "after food"),
+    (r"\b(?:after food|after meals|khana khane ke baad|oota aadmele|food aadmele|dadmalae|aadmele|pc)\b", "after food"),
     (r"\b(?:with food|during meals)\b", "with food"),
-    (r"\b(?:at bedtime|night)\b", "at bedtime"),
+    (r"\b(?:at bedtime|night|at night|hs)\b", "at bedtime"),
 ]
 
 # Routes
@@ -192,14 +197,14 @@ class ClinicalExtractor:
         name_status = "not_mentioned"
 
         name_match = (
-            re.search(r"\b(?:patient(?:'s)?\s*(?:names?|name)?(?:\s+is)?|patient\s+ka\s+naam)\s*[:,-]?\s*([A-Za-z]+(?:\s+[A-Za-z]+){0,3})", text, re.I)
+            re.search(r"\b(?:patient(?:'s)?\s*(?:named|names?|name)?(?:\s+is)?|patient\s+ka\s+naam|^names?\s*[:,-]?)\s*[:,-]?\s*([A-Za-z]+(?:\s+[A-Za-z]+){0,3})", text, re.I)
             or re.search(r"^([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)[,\s]+(\d{1,2}(?:-\d+)?)\b", text)
             or re.search(r"^([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)\s*,\s*\d+\s*(?:male|female|m|f)\b", text)
         )
         if name_match:
             candidate = name_match.group(1).strip()
-            # Strip prefixes like 'names in', 'name', 'ka naam', 'in '
-            candidate = re.sub(r"^(?:ka\s+naam\s+|names?\s+is\s+|names?\s+in\s+|names?\s+|in\s+)", "", candidate, flags=re.I).strip()
+            # Strip prefixes like 'names in', 'name', 'ka naam', 'in ', 'named'
+            candidate = re.sub(r"^(?:ka\s+naam\s+|names?\s+is\s+|names?\s+in\s+|named\s+|names?\s*[:,-]?\s*|in\s+)", "", candidate, flags=re.I).strip()
             candidate = re.sub(r"\b(?:age|aged|years?|saal|is|hai|chief|complaint)\b.*$", "", candidate, flags=re.I).strip(" ,.-")
             if candidate and candidate.lower() not in ("name", "names", "age", "male", "female", "test", "demo", "none"):
                 name_val = candidate
@@ -211,6 +216,21 @@ class ClinicalExtractor:
         age_source = None
         age_status = "not_mentioned"
         age_conf = None
+
+        # Check for uncertain or range age expressions first: "21 or 22", "21 to 22", "21-22", "not sure"
+        age_uncertainty_match = re.search(
+            r"\b(?:age|aged)?\s*[:,-]?\s*(\d{1,2})\s*(?:or|to)\s*(\d{1,2})\b(?:\s*[,\.]?\s*(?:i'm\s+not\s+sure|not\s+sure|maybe|approx(?:imately)?))?",
+            text,
+            re.I,
+        )
+        if age_uncertainty_match:
+            try:
+                age_val = int(age_uncertainty_match.group(1))
+                age_source = age_uncertainty_match.group(0).strip()
+                age_status = "needs_review"
+                age_conf = 0.50
+            except (ValueError, IndexError):
+                pass
 
         # Check if name match captured age as group 2 (e.g. "Sintana Bhatt 22-1" or "Shreya Bhatt 21")
         if name_match and len(name_match.groups()) > 1 and name_match.group(2):
@@ -441,64 +461,95 @@ class ClinicalExtractor:
         medicines: list[dict[str, Any]] = []
         all_terms = get_all_search_terms()
 
-        drug_pattern = re.compile(
-            r"\b(?:first|second|third|fourth|fifth|1st|2nd|3rd|4th|5th)\s+(?:one\s+is|med(?:icine)?\s+is|tablet\s+is)?[,\s]+([A-Za-z][A-Za-z0-9\-_]*)"
-            r"|\b(?:tab(?:let)?s?|cap(?:sule)?s?|inj(?:ection)?s?|syr(?:up)?s?|serab|serep|sirap|syp|neb(?:ulization)?|medication|medicine)\s*(?:[#№]?\s*(?:one|two|three|four|five|\d+|1st|2nd|3rd))?[,\s:]+([A-Za-z][A-Za-z0-9\-_]*(?:\s+[A-Za-z0-9\-_]+)?)"
-            r"|\b(" + "|".join(map(re.escape, all_terms)) + r")\b",
-            re.I,
+        # Pre-clean ASR artifacts like "medicine, eight" -> "medicine A"
+        clean_text = re.sub(r"\bmedicine[,\s]+eight\b", "medicine A", text, flags=re.I)
+
+        terms = sorted(list(set(all_terms + list(PHONETIC_DRUG_MAP.keys()) + ["pan d", "PAN D", "citrazine", "cough syrup"])), key=len, reverse=True)
+        terms_pat = "|".join(map(re.escape, terms))
+
+        DOSE_WORDS = {"one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "single", "half", "1", "2", "3", "4", "5", "10", "the", "this", "that", "for"}
+
+        med_anchor_pattern = re.compile(
+            r"(?:"
+            r"\b(?:first|second|third|fourth|fifth|1st|2nd|3rd|4th|5th)\s*(?:medicine|medication|item|one)?\s*(?:is)?\s*[:,-]?\s*(?:(?:tab(?:let)?s?|cap(?:sule)?s?|syr(?:up)?s?|inj(?:ection)?s?|serab|serep|sirap|syp)\s*[:,-]?\s*)?(?:(?:take\s+)?medicine\s+[A-Za-z0-9]|cough\s+syrup|" + terms_pat + r"|[A-Za-z][A-Za-z0-9\-_]*)"
+            r"|\b(?:tab(?:let)?s?|cap(?:sule)?s?|inj(?:ection)?s?|syr(?:up)?s?|serab|serep|sirap|syp)\s*[:,-]?\s*(?:[#№]?\s*(?:one|two|three|four|five|\d+)\s*[:,-]?\s*)?(?:(?:take\s+)?medicine\s+[A-Za-z0-9]|cough\s+syrup|" + terms_pat + r"|[A-Za-z][A-Za-z0-9\-_]*)"
+            r"|\b(?:take\s+)?medicine\s+[A-Za-z0-9]\b"
+            r"|\b(" + terms_pat + r")\b"
+            r")",
+            re.I
         )
 
-        raw_matches = list(drug_pattern.finditer(text))
-        valid_matches = []
+        raw_anchors = list(med_anchor_pattern.finditer(clean_text))
+        valid_anchors = []
 
-        for m in raw_matches:
+        for m in raw_anchors:
             start = m.start()
-            drug = m.group(1) or m.group(2) or m.group(3)
-            if not drug or drug.isdigit() or drug.lower() in STOP_WORDS:
+            match_str = m.group(0).strip()
+            first_tok = match_str.split()[0].lower().rstrip(",.:;")
+
+            pre_words = clean_text[:start].rstrip().split()
+            last_pre = pre_words[-1].lower().rstrip(",.;:") if pre_words else ""
+
+            # Skip if dose phrase like "one tablet" or reference "for the syrup"
+            if first_tok in ("tab", "tablet", "tablets", "cap", "capsule", "capsules", "syr", "syrup") and last_pre in DOSE_WORDS:
                 continue
 
-            first_tok = m.group(0).split()[0].lower().rstrip(",.:;")
-            pre_slice = text[:start].rstrip().split()
-            last_word = pre_slice[-1].lower().rstrip(",.;:") if pre_slice else ""
-            if first_tok in ("tab", "tablet", "tablets", "cap", "capsule", "capsules") and last_word in ("one", "two", "three", "four", "five", "1", "2", "3", "4", "5", "10", "single"):
+            # Skip if doctor repetition like "I repeat, Pan D"
+            two_pre = " ".join([w.lower().rstrip(",.;:") for w in pre_words[-3:]]) if len(pre_words) >= 3 else last_pre
+            if "repeat" in two_pre:
                 continue
 
-            raw_d = drug.strip()
-            # If multi-word match, clean trailing number words or form words that leaked into group 2
-            words = raw_d.split()
-            WORD_NUMS = {"zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "10", "650", "500", "mg", "ml"}
-            if len(words) > 1 and (words[1].lower() in WORD_NUMS or words[1].lower() in ("tablet", "tablets", "syrup")):
-                drug_clean = words[0]
-            elif re.search(r"^[A-Za-z\-]+(?:\s+(?:\d{1,2}|II|III|[A-Z]))$", raw_d):
-                drug_clean = raw_d
-            elif raw_d.lower() in [t.lower() for t in all_terms]:
-                drug_clean = raw_d
-            else:
-                drug_clean = raw_d.split()[0] if " " in raw_d and raw_d not in all_terms else raw_d
+            # Extract core drug name and optional form prefix
+            extracted_name = match_str
+            extracted_form = None
 
-            # Deduplicate immediate repetitions/refinements like "Pandy, Double Pandy"
-            if valid_matches:
-                prev_start, prev_drug = valid_matches[-1]
-                if start - prev_start < 25 and (prev_drug.lower() in drug_clean.lower() or drug_clean.lower() in prev_drug.lower()):
-                    combined_drug = f"{prev_drug}, {drug_clean}" if prev_drug.lower() != drug_clean.lower() else drug_clean
-                    valid_matches[-1] = (prev_start, combined_drug)
+            ord_sub = re.sub(r"^\b(?:first|second|third|fourth|fifth|1st|2nd|3rd|4th|5th)\s*(?:medicine|medication|item|one)?\s*(?:is)?\s*[:,-]?\s*", "", extracted_name, flags=re.I).strip()
+            form_sub_match = re.match(r"^(tab(?:let)?s?|cap(?:sule)?s?|syr(?:up)?s?|inj(?:ection)?s?|serab|serep|sirap|syp)\s*[:,-]?\s*(?:[#№]?\s*(?:one|two|three|four|five|\d+)\s*[:,-]?\s*)?", ord_sub, re.I)
+            if form_sub_match:
+                raw_f = form_sub_match.group(1).lower().rstrip("s")
+                extracted_form = FORM_MAP.get(raw_f, raw_f)
+                ord_sub = ord_sub[form_sub_match.end():].strip()
+
+            ord_sub = re.sub(r"^take\s+", "", ord_sub, flags=re.I).strip()
+            if not ord_sub or ord_sub.lower() in ("tablet", "syrup", "capsule", "medicine", "medication"):
+                continue
+            if ord_sub.lower() in STOP_WORDS or ord_sub.lower() in DOSE_WORDS or ord_sub.isdigit():
+                continue
+
+            drug_name = ord_sub.strip(" ,.:;")
+
+            # Deduplicate immediate repetitions of same drug or refinements like Pandy -> Double Pandy
+            if valid_anchors:
+                prev_start, prev_name, prev_form = valid_anchors[-1]
+                if prev_name.lower() == drug_name.lower():
+                    continue
+                if start - prev_start < 30 and (prev_name.lower() in drug_name.lower() or drug_name.lower() in prev_name.lower()):
+                    combined_drug = f"{prev_name}, {drug_name}"
+                    valid_anchors[-1] = (prev_start, combined_drug, prev_form or extracted_form)
                     continue
 
-            valid_matches.append((start, drug_clean))
+            valid_anchors.append((start, drug_name, extracted_form))
 
-        if not valid_matches:
+        if not valid_anchors:
             return []
 
-        for i, (start_pos, drug_name) in enumerate(valid_matches):
-            end_pos = valid_matches[i + 1][0] if i + 1 < len(valid_matches) else len(text)
-            clause = text[start_pos:end_pos].strip(" ,.;\n")
+        for i, (start_pos, drug_name, form_hint) in enumerate(valid_anchors):
+            end_pos = valid_anchors[i + 1][0] if i + 1 < len(valid_anchors) else len(clean_text)
+            clause = clean_text[start_pos:end_pos].strip(" ,.;\n")
 
-            med_entry = self._parse_medicine_clause(drug_name, clause, full_text=text, start_pos=start_pos)
+            # Clean trailing ordinals from clause: e.g. "... for two days. Second" -> strip "Second"
+            clause = re.sub(r"\.\s*(?:First|Second|Third|Fourth|Fifth|1st|2nd|3rd|4th|5th)\b.*$", "", clause, flags=re.I).strip(" ,.;")
+
+            # Check if this clause was cancelled by doctor self-correction
+            if re.search(r"\b(?:no[,\s\.]*sorry|sorry[,\s\.]*no|no[,\s\.]*wait|scratch\s+that)\b", clause, re.I) and i + 1 < len(valid_anchors):
+                continue
+
+            med_entry = self._parse_medicine_clause(drug_name, clause, full_text=clean_text, start_pos=start_pos, form_hint=form_hint)
             if med_entry:
                 medicines.append(med_entry)
 
         # Handle Self-Corrections and Removals
-        medicines = self._apply_self_corrections(medicines, text)
+        medicines = self._apply_self_corrections(medicines, clean_text)
 
         return medicines
 
@@ -508,98 +559,117 @@ class ClinicalExtractor:
         clause: str,
         full_text: str = "",
         start_pos: int = 0,
+        form_hint: str | None = None,
     ) -> dict[str, Any] | None:
         """Parse attributes of a single medicine from its enclosing clause."""
         from backend.services.medicines.alias_matcher import match_medicine
 
         clean_name = drug_name.strip()
-        primary_name = clean_name.split(",")[-1].strip() if "," in clean_name else clean_name
+        norm_name = PHONETIC_DRUG_MAP.get(clean_name.lower(), clean_name)
+        primary_name = norm_name.split(",")[-1].strip() if "," in norm_name else norm_name
 
+        raw_match_info = match_medicine(clean_name)
         match_info = match_medicine(primary_name)
-        if not match_info["candidate_matches"] and "," in clean_name:
-            match_info = match_medicine(clean_name.split(",")[0].strip())
+        if not match_info["candidate_matches"] and "," in norm_name:
+            match_info = match_medicine(norm_name.split(",")[0].strip())
 
         canonical = match_info.get("canonical_name")
         candidate_matches = match_info.get("candidate_matches", [])
-        requires_conf = match_info.get("requires_confirmation", False)
+        requires_conf = match_info.get("requires_confirmation", False) or raw_match_info.get("requires_confirmation", False)
+        if raw_match_info.get("candidate_matches"):
+            candidate_matches = list(dict.fromkeys(candidate_matches + raw_match_info.get("candidate_matches", [])))
 
-        is_ambiguous = requires_conf or bool(re.search(r"^[A-Za-z\-]+\s+\d{1,2}$", clean_name))
+        is_phonetic_mismatch = clean_name.lower() in PHONETIC_DRUG_MAP and clean_name.lower() != (canonical or "").lower()
+        is_ambiguous = requires_conf or is_phonetic_mismatch or bool(re.search(r"^[A-Za-z\-]+\s+\d{1,2}$", clean_name)) or ("medicine" in clean_name.lower()) or (not canonical and clean_name.lower() not in ("paracetamol", "pan d", "pan-d", "cetirizine", "dolo", "cough syrup"))
         name_status = "needs_review" if is_ambiguous else "extracted"
         name_conf = 0.65 if is_ambiguous else 0.95
 
-        # Display name: canonical if confirmed standard; if uncertain, preserve raw phrase
-        display_name = canonical if (canonical and not is_ambiguous) else primary_name
+        # Display name: canonical if confirmed standard; if phonetic mapping exists, use canonical; else preserve clean name
+        if canonical and not is_ambiguous:
+            display_name = canonical
+        elif clean_name.lower() in PHONETIC_DRUG_MAP:
+            display_name = PHONETIC_DRUG_MAP[clean_name.lower()]
+            candidate_matches = match_info.get("candidate_matches") or [display_name]
+            name_status = "needs_review"
+        elif "," in clean_name:
+            display_name = primary_name
+        elif re.search(r"^medicine\s+[A-Za-z0-9]$", clean_name, re.I):
+            display_name = clean_name.title()
+            name_status = "needs_review"
+        else:
+            display_name = clean_name
 
         # 1. Form (Must precede, be inside clause, or immediately precede in same sentence)
-        form_val = None
-        form_source = None
-        pre_context = full_text[max(0, start_pos - 35):start_pos] if full_text else ""
-        form_match = (
-            re.search(r"\b(tab(?:let)?s?|cap(?:sule)?s?|inj(?:ection)?s?|syr(?:up)?s?|serab|serep|sirap|syp|neb(?:ulization)?s?)\b", clause, re.I)
-            or (re.search(r"\b(tab(?:let)?s?|cap(?:sule)?s?|inj(?:ection)?s?|syr(?:up)?s?|serab|serep|sirap|syp|neb(?:ulization)?s?)\b", pre_context, re.I) if pre_context else None)
-        )
-        if form_match:
-            raw_form = form_match.group(1).lower().rstrip("s")
-            form_val = FORM_MAP.get(raw_form, raw_form)
-            form_source = form_match.group(1)
-        elif match_info.get("default_form"):
-            form_val = match_info["default_form"]
-        elif clean_name.lower() in ("montelukast", "montair", "montair lc", "dolo", "paracetamol", "pantoprazole", "cetirizine", "combiflam", "azithromycin", "amlodipine"):
-            form_val = "tablet"
+        form_val = form_hint
+        form_source = form_hint
+        if not form_val:
+            pre_context = full_text[max(0, start_pos - 35):start_pos] if full_text else ""
+            form_match = (
+                re.search(r"\b(tab(?:let)?s?|cap(?:sule)?s?|inj(?:ection)?s?|syr(?:up)?s?|serab|serep|sirap|syp|neb(?:ulization)?s?)\b", clause, re.I)
+                or (re.search(r"\b(tab(?:let)?s?|cap(?:sule)?s?|inj(?:ection)?s?|syr(?:up)?s?|serab|serep|sirap|syp|neb(?:ulization)?s?)\b", pre_context, re.I) if pre_context else None)
+            )
+            if form_match:
+                raw_form = form_match.group(1).lower().rstrip("s")
+                form_val = FORM_MAP.get(raw_form, raw_form)
+                form_source = form_match.group(1)
+            elif match_info.get("default_form"):
+                form_val = match_info["default_form"]
+            elif "cough syrup" in clause.lower() or "syrup" in display_name.lower():
+                form_val = "syrup"
+            elif clean_name.lower() in ("montelukast", "montair", "montair lc", "dolo", "paracetamol", "pantoprazole", "cetirizine", "citrazine", "combiflam", "azithromycin", "amlodipine"):
+                form_val = "tablet"
 
-        # 2. Strength (Strict: Only if explicitly dictated, e.g. "650mg", "650", "six fifty mg", "40mg", "1g", "500")
+        # 2. Strength (Strict: Only if explicitly dictated, e.g. "650mg", "650", "five hundred milligram", "10mg", "5mg")
         strength_val = None
         strength_source = None
         strength_status = "not_mentioned"
 
-        if not is_ambiguous:
-            FREQ_CODES = {"001", "101", "111", "100", "010", "011", "110", "10-1", "00-1", "11-1"}
+        FREQ_CODES = {"001", "101", "111", "100", "010", "011", "110", "10-1", "00-1", "11-1"}
 
-            st_match = (
-                re.search(r"\b" + re.escape(clean_name) + r"\s*(\d+(?:\.\d+)?\s*(?:mg|g|mcg|iu|gm|%))\b", clause, re.I)
-                or re.search(r"\b" + re.escape(clean_name) + r"\s*(\d{2,4})\b", clause, re.I)
-                or re.search(r"\b(\d+(?:\.\d+)?\s*(?:mg|g|mcg|iu|gm|%))\b", clause, re.I)
-                or re.search(r"\b(one\s+gram|two\s+grams|1g|2g)\b", clause, re.I)
-            )
-            if st_match:
-                raw_st = st_match.group(1).strip()
-                if raw_st not in FREQ_CODES:
-                    if raw_st.isdigit() and len(raw_st) >= 2:
-                        strength_val = f"{raw_st}mg"
-                    elif raw_st.lower() == "one gram":
-                        strength_val = "1g"
-                    else:
-                        strength_val = raw_st
-                    strength_source = st_match.group(0).strip()
-                    strength_status = "extracted"
+        st_match = (
+            re.search(r"\b(\d+(?:\.\d+)?\s*(?:mg|g|mcg|milligram(?:s)?))\b", clause, re.I)
+            or re.search(r"\b" + re.escape(clean_name) + r"\s*(\d{2,4})\b", clause, re.I)
+            or re.search(r"\b(one\s+gram|two\s+grams|1g|2g)\b", clause, re.I)
+        )
+        if st_match:
+            raw_st = st_match.group(1).strip().lower()
+            if raw_st not in FREQ_CODES:
+                if "milligram" in raw_st:
+                    strength_val = re.sub(r"\s*milligram(?:s)?", "mg", raw_st)
+                elif raw_st.isdigit() and len(raw_st) >= 2:
+                    strength_val = f"{raw_st}mg"
+                elif raw_st == "one gram":
+                    strength_val = "1g"
+                else:
+                    strength_val = raw_st
+                strength_source = st_match.group(0).strip()
+                strength_status = "extracted"
 
-            if not strength_val:
-                spoken_pats = "|".join(re.escape(k) for k in sorted(SPOKEN_STRENGTH_MAP.keys(), key=len, reverse=True))
-                # 1) Spoken strength with explicit unit
-                spoken_with_unit = re.search(r"\b(" + spoken_pats + r")\s*(mg|milli\s*grams?|g|mcg|gm)\b", clause, re.I)
-                # 2) Spoken strength without unit immediately following the drug name (e.g. "Paracetamol six fifty")
-                multi_word_pats = "|".join(re.escape(k) for k in ["six fifty", "six hundred fifty", "six hundred and fifty", "five hundred", "four hundred", "two fifty", "one twenty five", "one thousand"])
-                spoken_no_unit = re.search(r"\b" + re.escape(clean_name) + r"\s+(" + multi_word_pats + r")\b", clause, re.I)
+        if not strength_val:
+            spoken_pats = "|".join(re.escape(k) for k in sorted(SPOKEN_STRENGTH_MAP.keys(), key=len, reverse=True))
+            spoken_with_unit = re.search(r"\b(" + spoken_pats + r")\s*(?:mg|milli\s*grams?|milligram(?:s)?|g|mcg|gm)\b", clause, re.I)
+            multi_word_pats = "|".join(re.escape(k) for k in ["six fifty", "six hundred fifty", "six hundred and fifty", "five hundred", "four hundred", "two fifty", "one twenty five", "one thousand"])
+            spoken_no_unit = re.search(r"\b" + re.escape(clean_name) + r"\s+(" + multi_word_pats + r")\b", clause, re.I)
 
-                if spoken_with_unit:
-                    norm_num = SPOKEN_STRENGTH_MAP[spoken_with_unit.group(1).lower()]
-                    strength_val = f"{norm_num}mg"
-                    strength_source = spoken_with_unit.group(0).strip()
-                    strength_status = "extracted"
-                elif spoken_no_unit:
-                    norm_num = SPOKEN_STRENGTH_MAP[spoken_no_unit.group(1).lower()]
-                    strength_val = f"{norm_num}mg"
-                    strength_source = spoken_no_unit.group(0).strip()
-                    strength_status = "extracted"
+            if spoken_with_unit:
+                norm_num = SPOKEN_STRENGTH_MAP[spoken_with_unit.group(1).lower()]
+                strength_val = f"{norm_num}mg"
+                strength_source = spoken_with_unit.group(0).strip()
+                strength_status = "extracted"
+            elif spoken_no_unit:
+                norm_num = SPOKEN_STRENGTH_MAP[spoken_no_unit.group(1).lower()]
+                strength_val = f"{norm_num}mg"
+                strength_source = spoken_no_unit.group(0).strip()
+                strength_status = "extracted"
 
-            if not strength_val:
-                name_num_match = re.search(r"^([A-Za-z\-]+)\s+(\d{2,4})$", clean_name)
-                if name_num_match:
-                    strength_val = f"{name_num_match.group(2)}mg"
-                    strength_source = name_num_match.group(2)
-                    strength_status = "extracted"
-                    if not is_ambiguous:
-                        display_name = name_num_match.group(1)
+        if not strength_val:
+            name_num_match = re.search(r"^([A-Za-z\-]+)\s+(\d{2,4})$", clean_name)
+            if name_num_match:
+                strength_val = f"{name_num_match.group(2)}mg"
+                strength_source = name_num_match.group(2)
+                strength_status = "extracted"
+                if not is_ambiguous:
+                    display_name = name_num_match.group(1)
 
         # 3. Dose per administration (e.g. "one tablet", "1 tablet", "10ml", "one sachet", "two teaspoons")
         dose_val = None

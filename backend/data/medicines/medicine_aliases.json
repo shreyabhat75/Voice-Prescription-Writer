@@ -107,16 +107,18 @@
     {
       "canonical_name": "Cetirizine",
       "generic_name": "Cetirizine Hydrochloride",
-      "brand_names": ["Cetirizine", "Cetzine", "Alerid", "Okacet", "Zyrtec"],
+      "brand_names": ["Cetirizine", "Cetzine", "Alerid", "Okacet", "Zyrtec", "citrazine", "citrizine"],
       "aliases": [
         "cetirizine",
         "cetzine",
-        "alerid"
+        "alerid",
+        "citrazine",
+        "citrizine"
       ],
-      "candidate_matches": ["Cetirizine 10mg"],
+      "candidate_matches": ["Cetirizine 10mg", "Cetzine"],
       "default_form": "tablet",
       "default_route": "oral",
-      "requires_confirmation_for": []
+      "requires_confirmation_for": ["citrazine", "citrizine"]
     },
     {
       "canonical_name": "Azithromycin",
