@@ -1,0 +1,336 @@
+================================================================================
+VOICE PRESCRIPTION WRITER - TEAM TASK DELEGATION & EXECUTION SPECIFICATION
+================================================================================
+Project: Clinical Voice Prescription Writer
+Repository: https://github.com/shreyabhat75/Voice-Prescription-Writer
+Target Architecture: FastAPI (Python 3.13) + React (Vite/TypeScript) + SQLite/Deepgram
+Target Audience: Clinical Physicians, Hospital Outpatient Departments, Attending Doctors
+Last Updated: November 2026
+
+--------------------------------------------------------------------------------
+TABLE OF CONTENTS
+--------------------------------------------------------------------------------
+1. Global Architecture & Team Collaboration Rules
+2. PERSON 1: Senior Frontend & Clinical UI/UX Lead
+   - Scope: Professional Clinical Design System, Live Waveform, Fast UX
+3. PERSON 2: Senior Backend & AI Performance Engineer
+   - Scope: Real-Time Audio Streaming, Sub-Millisecond Matching, DB WAL Mode
+4. PERSON 3: Senior DevOps & Platform Engineer
+   - Scope: Multi-Stage Docker, Docker Compose, GitHub Actions CI/CD, Production
+5. Verification Matrix & Git PR Checklist
+================================================================================
+
+
+================================================================================
+1. GLOBAL ARCHITECTURE & TEAM COLLABORATION RULES
+================================================================================
+- Branching Strategy:
+  * `main`: Always protected, deployable, with 100% passing automated test suite.
+  * Feature Branches:
+    - Person 1: `feature/ui-clinical-redesign`
+    - Person 2: `feature/perf-streaming-engine`
+    - Person 3: `feature/docker-ci-cd`
+  * Never push directly to `main`. Every merge must go through a Pull Request (PR)
+    with code review and CI verification.
+
+- Zero Secrets Policy:
+  * Never commit `.env` or plain API keys (Deepgram, Gemini, OpenAI).
+  * Always use `.env.example` as the canonical environment template.
+  * Local databases (`*.db`, `*.sqlite3`) and audio uploads (`uploads/`) are
+    strictly ignored by `.gitignore`.
+
+- File Ownership Boundaries:
+  * Person 1 owns: `frontend/src/**`, `frontend/index.html`, `frontend/tailwind.config.js`
+  * Person 2 owns: `backend/services/**`, `backend/routers/**`, `backend/database.py`, `backend/data/**`
+  * Person 3 owns: `Dockerfile*`, `docker-compose.yml`, `.github/workflows/**`, `deploy/**`, `nginx.conf`
+  * Shared files (`README.md`, `requirements.txt`, `backend/models/**`) require
+    cross-team sign-off before modifying schemas.
+
+- Medical Non-Inference Commitment:
+  * Never infer unspoken patient sex from names or pronouns.
+  * Never infer medication durations if not explicitly dictated.
+  * Never invent diagnoses from isolated symptoms.
+  * Require explicit doctor confirmation for uncertain candidate matches (e.g. Pan-D).
+
+
+================================================================================
+2. PERSON 1: SENIOR FRONTEND & CLINICAL UI/UX LEAD
+================================================================================
+Role: Lead Frontend & Doctor Experience Engineer
+Git Branch: feature/ui-clinical-redesign
+File Ownership:
+  - frontend/src/components/**
+  - frontend/src/pages/**
+  - frontend/src/hooks/**
+  - frontend/src/index.css
+  - frontend/tailwind.config.js
+  - frontend/src/types/index.ts
+
+MISSION OVERVIEW:
+Transform the current working prototype into a high-end, responsive, accessible
+electronic prescription application comparable to enterprise EHR/EMR platforms
+(Epic Systems, Cerner, Osmind). Focus on physician ergonomics, zero layout shifts,
+real-time audio visual feedback, and frictionless keyboard-driven review.
+
+DEEP TECHNICAL BRIEF:
+1. Clinical Design System & Micro-Interactions:
+   - Establish a refined clinical color palette: Clinical Deep Navy (#0F172A),
+     Medical Blue (#2563EB), Hospital Mint (#059669), Caution Amber (#D97706),
+     and Critical Alert (#DC2626).
+   - Clean card typography with tabular numerals (`font-variant-numeric: tabular-nums`)
+     for medicine doses and timestamps.
+   - Status transitions with subtle pulse indicators when transcribing or structuring.
+
+2. Live Audio Recording Waveform:
+   - Implement an interactive canvas-based audio visualizer inside `RecordButton.tsx`
+     or an attached `AudioWaveform.tsx` component using `AudioContext` and `AnalyserNode`.
+   - Provide visual feedback for microphone levels: silence warning, active speech
+     bars, and clip prevention.
+   - Audio playback player: Add a scrub bar synced with word-level confidence tokens.
+     Clicking a word in the transcript should seek playback to that word's timestamp.
+
+3. Ergonomic Physician Editing (Speed & Keyboard Accessibility):
+   - Inline fast editing: Click on any cell or press `Enter` to edit inline without
+     opening disruptive modal sheets.
+   - Quick Add: Press `Alt + N` or `Ctrl + Shift + A` to instantly append a blank
+     medicine row with auto-focus on Drug Name.
+   - Smart Auto-Complete: Wire the Drug Name input to the backend medicine alias
+     catalog (`GET /api/medicines/search?q=...` or client-side fuzzy search) so doctors
+     can type `pan` and select `Pan-D` with arrow keys.
+   - Candidate Pills: Enhance the yellow candidate badge so doctors can confirm
+     an ambiguous candidate (e.g. `[Pan-D ✓]`) with a single click or spacebar.
+
+4. Doctor Confirmation & PDF Generation Gate:
+   - Ensure the "Doctor Confirmation Gate" modal clearly displays:
+     * Review checklist (patient demographics, unconfirmed medicines count, warnings).
+     * Attending physician signature / registration input with saved doctor preferences.
+     * Immutable confirmation timestamp.
+   - The "Download PDF" button remains strictly disabled and locked until confirmation
+     is received from the backend.
+
+CHECKLIST & DELIVERABLES:
+[ ] 1. Design & Typography
+    [ ] Add tabular numerals and inter/system font hierarchy in `index.css`.
+    [ ] Standardize card padding, borders, shadows, and subtle transitions.
+    [ ] Support responsive layout for tablet viewports (iPad Landscape / 1024px+).
+
+[ ] 2. Audio Capture & Waveform
+    [ ] Build `AudioVisualizer.tsx` using HTML5 Canvas + Web Audio API.
+    [ ] Implement audio level meter (green/yellow/red) to prevent muffled/silent dictations.
+    [ ] Synchronize audio playback playback time with transcript word tokens.
+
+[ ] 3. Prescription Table UX
+    [ ] Implement keyboard navigation (`Tab` across columns, `Enter` to commit, `Esc` to cancel).
+    [ ] Add keyboard shortcut (`Alt+N`) to append a new medication.
+    [ ] Implement drug name autocomplete pill selector with fuzzy match highlighting.
+    [ ] Add delete confirmation tooltip for individual medicine rows.
+
+[ ] 4. Audit & History View
+    [ ] Add filter pills to `PrescriptionHistory.tsx` (All, Needs Review, Confirmed, Today).
+    [ ] Add batch delete with multi-select checkboxes in History view.
+    [ ] Render audit timeline showing: Initial Dictation -> Clarifications -> Doctor Edits -> PDF.
+
+[ ] 5. Quality & Performance Verification
+    [ ] Zero layout shifts (CLS < 0.1) during real-time transcription or voice edit updates.
+    [ ] Run `npm run build` with zero TypeScript warnings or lint errors.
+
+
+================================================================================
+3. PERSON 2: SENIOR BACKEND & AI PERFORMANCE ENGINEER
+================================================================================
+Role: Lead Backend, STT/LLM & Systems Performance Engineer
+Git Branch: feature/perf-streaming-engine
+File Ownership:
+  - backend/services/**
+  - backend/routers/**
+  - backend/database.py
+  - backend/data/medicines/**
+  - backend/tests/**
+
+MISSION OVERVIEW:
+Elevate backend throughput, reduce end-to-end transcription latency to near zero,
+and optimize the clinical extraction engine. Ensure the system scales smoothly
+under concurrent doctor dictations without memory leaks, SQLite write locks, or
+slow substring iterations.
+
+DEEP TECHNICAL BRIEF:
+1. Real-Time Audio Streaming via WebSockets:
+   - Implement a WebSocket endpoint (`/ws/transcribe/{prescription_id}`).
+   - Stream raw audio chunks directly from browser `MediaRecorder` (100ms chunks)
+     to Deepgram Live Streaming API via WebSockets.
+   - Emit intermediate transcripts (`is_final=False`) to the frontend in real time
+     so the doctor watches words appear while speaking.
+   - Finalize prescription record automatically when the WebSocket receives audio EOF.
+
+2. Sub-Millisecond Medicine Matching & In-Memory Indexing:
+   - Current status: Alias matching does regex scans over sorted terms.
+   - Optimization: Implement an in-memory **Trie** or **Aho-Corasick automaton** in
+     `backend/services/medicines/alias_matcher.py`.
+   - Benchmark target: Match queries against 50,000+ Indian brand names and SNOMED
+     CT India drug extensions in $< 0.5\text{ ms}$ per clause.
+   - Expand `medicine_aliases.json` catalog with generic compositions (e.g. Paracetamol,
+     Amoxicillin-Clavulanate, Metformin, Telmisartan, Pantoprazole-Domperidone).
+
+3. Database Concurrency & SQLite WAL Mode:
+   - Configure SQLite `PRAGMA journal_mode = WAL;` (Write-Ahead Logging) to eliminate
+     database lock contention between concurrent reads and writes.
+   - Enable `PRAGMA synchronous = NORMAL;` and `PRAGMA cache_size = -64000;` (64MB memory cache).
+   - Add database indexes:
+     * `CREATE INDEX IF NOT EXISTS idx_prescriptions_status_date ON prescriptions(status, updated_at DESC);`
+     * `CREATE INDEX IF NOT EXISTS idx_medicine_items_rx ON medicine_items(prescription_id, item_index);`
+     * `CREATE INDEX IF NOT EXISTS idx_audio_records_rx ON audio_records(prescription_id);`
+
+4. Extraction Engine Robustness & Code-Mixing:
+   - Support regional Indian English number formats (e.g., "ek goli", "do chamach",
+     "teen baar", "10 din", "OD", "BD", "TDS", "HS", "SOS").
+   - Handle self-corrections with lookahead:
+     "Dolo 500... sorry make that Dolo 650" -> Extract only final value 650mg.
+   - Strict Non-Inference: Keep patient sex `None` when unstated; do not invent duration;
+     leave diagnosis empty unless explicitly dictated.
+
+CHECKLIST & DELIVERABLES:
+[ ] 1. Audio Streaming Architecture
+    [ ] Add WebSocket router `/ws/transcribe/{prescription_id}` in `backend/routers/audio.py`.
+    [ ] Wire bidirectional live streaming between browser client and Deepgram Live STT.
+    [ ] Preserve fallback to HTTP batch upload for offline or flaky connections.
+
+[ ] 2. Alias Search Optimization
+    [ ] Implement Trie/Aho-Corasick data structure in `backend/services/medicines/alias_matcher.py`.
+    [ ] Benchmark search time: verify matching completes in $< 1\text{ ms}$ for 1,000 queries.
+    [ ] Add SNOMED CT India drug dictionary entries into `medicine_aliases.json`.
+
+[ ] 3. Database & Connection Tuning
+    [ ] Enable WAL mode and cache pragmas in `backend/database.py`.
+    [ ] Create compound indexes for fast history search and pagination.
+    [ ] Add database migration script to handle automated schema versioning.
+
+[ ] 4. Clinical Extraction Hardening
+    [ ] Add test cases for Hindi/English code-mixed durations ("paanch din", "subah sham").
+    [ ] Ensure self-correction logic (`_apply_self_corrections`) handles multi-stage changes.
+    [ ] Verify all 33 existing unit and regression tests pass without regression.
+
+[ ] 5. Latency Benchmarks
+    [ ] Profile and log latency breakdown: STT latency, Extractor latency, DB save latency.
+    [ ] Target: Full structuring roundtrip under 500ms for deterministic extractor.
+
+
+================================================================================
+4. PERSON 3: SENIOR DEVOPS & PLATFORM ENGINEER
+================================================================================
+Role: Lead DevOps, Containerization & CI/CD Platform Engineer
+Git Branch: feature/docker-ci-cd
+File Ownership:
+  - Dockerfile.backend
+  - Dockerfile.frontend
+  - docker-compose.yml
+  - docker-compose.prod.yml
+  - nginx.conf
+  - .github/workflows/**
+  - deploy/**
+
+MISSION OVERVIEW:
+Provide production-ready containerization, reproducible builds, and automated
+continuous integration / continuous deployment (CI/CD). Ensure any engineer or
+hospital IT administrator can spin up the full application with a single command,
+backed by automated regression checks on every GitHub pull request.
+
+DEEP TECHNICAL BRIEF:
+1. Multi-Stage Production Dockerfiles:
+   - `Dockerfile.backend`:
+     * Base: `python:3.13-slim-bookworm`.
+     * Multi-stage build: Stage 1 builds wheels; Stage 2 copies wheels and installs
+       without gcc/build tools to minimize attack surface and image size (< 200MB).
+     * Non-root user: Run as `appuser:appgroup` (UID/GID 10001).
+     * System dependencies: Include `ffmpeg` for audio conversion and `curl` for healthchecks.
+     * Health check: `HEALTHCHECK --interval=30s --timeout=5s CMD curl -f http://localhost:8000/docs || exit 1`.
+   - `Dockerfile.frontend`:
+     * Stage 1 (Builder): Node.js 22 alpine, runs `npm ci` and `npm run build`.
+     * Stage 2 (Runner): `nginx:alpine-slim`.
+     * Copies compiled static bundle from builder to `/usr/share/nginx/html`.
+     * Hardened Nginx configuration with gzip, brotli, cache headers for assets,
+       and reverse proxy `/api/` forwarding to backend container.
+
+2. Container Orchestration (`docker-compose.yml`):
+   - Service `backend`:
+     * Exposed on internal network port 8000.
+     * Environment variables mapped from `.env`.
+     * Named persistent volumes: `voice_rx_db:/app/data`, `voice_rx_uploads:/app/uploads`,
+       `voice_rx_pdf:/app/pdf_output`.
+     * Resource limits: 1 CPU, 1GB RAM.
+   - Service `frontend`:
+     * Exposed on host port 80 (or 5173 for development).
+     * Depends on `backend` with healthcheck condition `service_healthy`.
+   - Service `dev` overlay: Mount local source directories for hot-reloading development.
+
+3. GitHub Actions CI/CD Pipeline (`.github/workflows/ci.yml`):
+   - Pipeline stages:
+     1. **Linting & Code Quality**:
+        - Backend: `ruff check backend/` and `ruff format --check backend/`.
+        - Frontend: `eslint frontend/src/` and `tsc --noEmit`.
+     2. **Automated Test Suite**:
+        - Run `pytest backend/tests/` with coverage reports.
+        - Run frontend unit/component tests (`npm test`).
+        - Enforce failure if test pass rate < 100% or coverage drops below 85%.
+     3. **Container Build & Verification**:
+        - Build both Docker images via `docker buildx`.
+        - Run `docker compose up -d` in test runner and verify healthcheck endpoint.
+     4. **Automated Docker Image Release (on merge to main)**:
+        - Tag with git commit SHA and `latest`.
+        - Push to GitHub Container Registry (`ghcr.io/shreyabhat75/voice-prescription-writer`).
+
+4. Production Deployment & Security:
+   - Provide deployment guides for cloud providers: AWS Lightsail, DigitalOcean App Platform,
+     Railway, and on-premise hospital local server.
+   - Configure HTTPS/TLS with Let's Encrypt / Caddy reverse proxy template.
+   - Add automated log rotation to prevent SQLite or uvicorn log bloat.
+
+CHECKLIST & DELIVERABLES:
+[ ] 1. Dockerfile Optimization
+    [ ] Write `Dockerfile.backend` with multi-stage build, non-root user, and healthcheck.
+    [ ] Write `Dockerfile.frontend` with Nginx Alpine and asset cache tuning.
+    [ ] Verify image security scan with `docker scout` or `trivy` with zero critical CVEs.
+
+[ ] 2. Compose Environment
+    [ ] Create `docker-compose.yml` orchestrating backend and frontend with persistent volumes.
+    [ ] Create `nginx.conf` routing `/api` -> `backend:8000` and `/` -> React static SPA.
+    [ ] Verify single-command boot: `docker compose up --build` works out of the box.
+
+[ ] 3. GitHub Actions CI Pipeline
+    [ ] Create `.github/workflows/ci.yml` running ruff, tsc, and pytest on all PRs.
+    [ ] Configure branch protection rules on `main` requiring passing CI status check.
+    [ ] Add test summary and code coverage badges to `README.md`.
+
+[ ] 4. Deployment & Infrastructure
+    [ ] Create `deploy/production-deploy.sh` for one-click server deployment.
+    [ ] Write `docs/DEPLOYMENT_GUIDE.md` detailing on-prem hospital installation and cloud setup.
+    [ ] Verify environment secrets are securely ingested via GitHub Actions Secrets.
+
+
+================================================================================
+5. VERIFICATION MATRIX & GIT PR CHECKLIST
+================================================================================
+Before any person opens a Pull Request into `main`, they must check off:
+
+[ ] 1. Branch Up-to-Date:
+    Rebase or merge latest `main` into your feature branch before requesting review:
+    `git fetch origin && git merge origin/main`
+
+[ ] 2. Automated Tests Passing:
+    Run the full regression test suite locally:
+    `pytest backend/tests/` (Must output: 33+ passed, 0 failed).
+
+[ ] 3. No Hardcoded Secrets:
+    Confirm no API keys, private passwords, or local `.env` values are committed:
+    `git diff origin/main -- .env` (Must be empty).
+
+[ ] 4. Clean Build:
+    Frontend compiles cleanly:
+    `cd frontend && npm run build` (Must succeed with zero errors).
+
+[ ] 5. Definition of Done:
+    - Person 1: Modern clinical UI verified on desktop and tablet viewport.
+    - Person 2: End-to-end extraction and alias matching latency verified.
+    - Person 3: `docker compose up --build` boots up healthy on a fresh machine.
+================================================================================
+END OF TASK SPECIFICATION
+================================================================================
