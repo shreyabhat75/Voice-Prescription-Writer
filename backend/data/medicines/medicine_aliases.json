@@ -55,6 +55,9 @@
       "brand_names": ["Montelukast", "Montair", "Montair LC", "Monticope", "Romilast"],
       "aliases": [
         "montelukast",
+        "montelicast",
+        "montilucast",
+        "montalucast",
         "montelucas",
         "montelcast",
         "montalcast",
@@ -68,7 +71,7 @@
       "candidate_matches": ["Montelukast", "Montair LC"],
       "default_form": "tablet",
       "default_route": "oral",
-      "requires_confirmation_for": ["montelucas", "montelcast", "montalcast", "montelka", "panty lucas", "panty lucas t", "monttull", "pantoste"]
+      "requires_confirmation_for": ["montelicast", "montilucast", "montalucast", "montelucas", "montelcast", "montalcast", "montelka", "panty lucas", "panty lucas t", "monttull", "pantoste"]
     },
     {
       "canonical_name": "Benadryl",
@@ -76,14 +79,16 @@
       "brand_names": ["Benadryl", "Benadryl DR"],
       "aliases": [
         "benadryl",
+        "benedryl",
         "benedrill",
         "benetril",
+        "benadryll",
         "penadryl"
       ],
       "candidate_matches": ["Benadryl"],
       "default_form": "syrup",
       "default_route": "oral",
-      "requires_confirmation_for": ["benedrill", "benetril", "penadryl"]
+      "requires_confirmation_for": ["benedryl", "benedrill", "benetril", "benadryll", "penadryl"]
     },
     {
       "canonical_name": "Pantoprazole",

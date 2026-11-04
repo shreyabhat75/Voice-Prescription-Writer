@@ -17,6 +17,7 @@ svc = PrescriptionService()
 
 class StructuringRequest(BaseModel):
     transcript_override: str | None = None
+    transcript: str | None = None
 
 
 @router.post(
@@ -28,7 +29,7 @@ async def structure_prescription(
     prescription_id: str,
     payload: StructuringRequest | None = None,
 ) -> PrescriptionResponse:
-    override = payload.transcript_override if payload else None
+    override = (payload.transcript_override or payload.transcript) if payload else None
     try:
         return await svc.structure_prescription(
             prescription_id=prescription_id,

@@ -47,6 +47,11 @@ FORM_MAP: dict[str, str] = {
     "capsules": "capsule",
     "syr": "syrup",
     "syrup": "syrup",
+    "serab": "syrup",
+    "serep": "syrup",
+    "sirap": "syrup",
+    "syp": "syrup",
+    "surup": "syrup",
     "inj": "injection",
     "injection": "injection",
     "neb": "nebulization",
@@ -60,6 +65,29 @@ FORM_MAP: dict[str, str] = {
     "solution": "solution",
 }
 
+# Spoken number strengths common in doctor speech
+SPOKEN_STRENGTH_MAP: dict[str, str] = {
+    "six fifty": "650",
+    "six hundred fifty": "650",
+    "six hundred and fifty": "650",
+    "five hundred": "500",
+    "four hundred": "400",
+    "two fifty": "250",
+    "one twenty five": "125",
+    "one thousand": "1000",
+    "one hundred": "100",
+    "sixty five": "65",
+    "fifty": "50",
+    "forty": "40",
+    "twenty five": "25",
+    "twenty": "20",
+    "fifteen": "15",
+    "ten": "10",
+    "five": "5",
+    "two": "2",
+    "one": "1",
+}
+
 # Phonetic drug mappings for common Indian STT variations
 PHONETIC_DRUG_MAP: dict[str, str] = {
     "panty": "Pan-D",
@@ -67,9 +95,15 @@ PHONETIC_DRUG_MAP: dict[str, str] = {
     "pinedi": "Pan-D",
     "pindy": "Pan-D",
     "penadryl": "Benadryl",
+    "benedryl": "Benadryl",
+    "benedrill": "Benadryl",
+    "benetril": "Benadryl",
+    "benadryll": "Benadryl",
     "parasautomal": "Paracetamol",
     "peresautomalt": "Paracetamol",
     "peresautomal": "Paracetamol",
+    "montelicast": "Montelukast",
+    "montilucast": "Montelukast",
     "monttull": "Montair LC",
     "monttull car's d": "Montair LC",
     "panty lucas t": "Montelukast",
@@ -83,8 +117,6 @@ PHONETIC_DRUG_MAP: dict[str, str] = {
     "montalcast": "Montelukast",
     "pantoste": "Montelukast",
     "finally": "Pan-D",
-    "benedrill": "Benadryl",
-    "benetril": "Benadryl",
 }
 
 # Non-drug stop words that might follow form prefixes
@@ -95,6 +127,7 @@ STOP_WORDS: set[str] = {
     "advice", "follow", "review", "investigations", "prescription", "dawai", "report",
     "one", "two", "four", "five", "six", "seven", "eight", "nine", "ten",
     "tablet", "tablets", "capsule", "capsules", "syrup", "injection", "sachet", "teaspoon",
+    "times", "time", "day", "days", "daily", "food", "morning", "night", "bedtime", "breakfast",
 }
 
 # Standard frequency abbreviations and equivalents
@@ -285,7 +318,7 @@ class ClinicalExtractor:
         else:
             symp_match = (
                 re.search(
-                    r"\b((?:diary\s+of|diarrhea|diarrhoea|dysentery|dessentry|dissing\s+tree|loose\s+motion|lose\s+motion|luzmotion|fever|acidity|headache|vomiting|cough|breathlessness)(?:[,\s]+(?:and|from|for|since|of)[,\s]+)?(?:body\s+ache|gas\s+ban\s+rahi\s+hai|gastric\s+pain)?(?:\s*(?:from|for|since|of)?\s*\d+\s*(?:days?|weeks?|months?|din|hafte|week|month))?)\b",
+                    r"\b((?:diary\s+of|diarrhea|diarrhoea|dysentery|dessentry|dissing\s+tree|loose\s+motion|lose\s+motion|luzmotion|fever|acidity|headache|vomiting|cough|breathlessness)(?:[,\s]+(?:and|from|for|since|of)[,\s]+)?(?:body\s+ache|gas\s+ban\s+rahi\s+hai|gastric\s+pain)?(?:\s*(?:from|for|since|of)?\s*(?:\d+|one|two|three|four|five|six|seven|eight|nine|ten|teen|do|ek|char|paanch)\s*(?:days?|weeks?|months?|din|hafte|week|month))?)\b",
                     text,
                     re.I,
                 )
@@ -409,8 +442,8 @@ class ClinicalExtractor:
         all_terms = get_all_search_terms()
 
         drug_pattern = re.compile(
-            r"\b(?:first|second|third|1st|2nd|3rd)\s+(?:one\s+is|med(?:icine)?\s+is)[,\s]+([A-Za-z][A-Za-z0-9\-_]*)"
-            r"|\b(?:tab(?:let)?|cap(?:sule)?|inj(?:ection)?|syr(?:up)?|neb(?:ulization)?)[,\s]+([A-Za-z][A-Za-z0-9\-_]*(?:\s+[A-Za-z0-9\-_]+)?)"
+            r"\b(?:first|second|third|fourth|fifth|1st|2nd|3rd|4th|5th)\s+(?:one\s+is|med(?:icine)?\s+is|tablet\s+is)?[,\s]+([A-Za-z][A-Za-z0-9\-_]*)"
+            r"|\b(?:tab(?:let)?s?|cap(?:sule)?s?|inj(?:ection)?s?|syr(?:up)?s?|serab|serep|sirap|syp|neb(?:ulization)?|medication|medicine)\s*(?:[#№]?\s*(?:one|two|three|four|five|\d+|1st|2nd|3rd))?[,\s:]+([A-Za-z][A-Za-z0-9\-_]*(?:\s+[A-Za-z0-9\-_]+)?)"
             r"|\b(" + "|".join(map(re.escape, all_terms)) + r")\b",
             re.I,
         )
@@ -420,18 +453,23 @@ class ClinicalExtractor:
 
         for m in raw_matches:
             start = m.start()
-            # If preceded by number word or digit, it was a dose like "one tablet"
-            pre_slice = text[:start].rstrip().split()
-            last_word = pre_slice[-1].lower() if pre_slice else ""
-            if last_word in ("one", "two", "three", "four", "five", "1", "2", "3", "4", "5", "10", "single"):
-                continue
-
             drug = m.group(1) or m.group(2) or m.group(3)
             if not drug or drug.isdigit() or drug.lower() in STOP_WORDS:
                 continue
 
+            first_tok = m.group(0).split()[0].lower().rstrip(",.:;")
+            pre_slice = text[:start].rstrip().split()
+            last_word = pre_slice[-1].lower().rstrip(",.;:") if pre_slice else ""
+            if first_tok in ("tab", "tablet", "tablets", "cap", "capsule", "capsules") and last_word in ("one", "two", "three", "four", "five", "1", "2", "3", "4", "5", "10", "single"):
+                continue
+
             raw_d = drug.strip()
-            if re.search(r"^[A-Za-z\-]+(?:\s+(?:\d{1,2}|II|III|[A-Z]))$", raw_d):
+            # If multi-word match, clean trailing number words or form words that leaked into group 2
+            words = raw_d.split()
+            WORD_NUMS = {"zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "10", "650", "500", "mg", "ml"}
+            if len(words) > 1 and (words[1].lower() in WORD_NUMS or words[1].lower() in ("tablet", "tablets", "syrup")):
+                drug_clean = words[0]
+            elif re.search(r"^[A-Za-z\-]+(?:\s+(?:\d{1,2}|II|III|[A-Z]))$", raw_d):
                 drug_clean = raw_d
             elif raw_d.lower() in [t.lower() for t in all_terms]:
                 drug_clean = raw_d
@@ -497,8 +535,8 @@ class ClinicalExtractor:
         form_source = None
         pre_context = full_text[max(0, start_pos - 35):start_pos] if full_text else ""
         form_match = (
-            re.search(r"\b(tab(?:let)?s?|cap(?:sule)?s?|inj(?:ection)?s?|syr(?:up)?s?|neb(?:ulization)?s?)\b", clause, re.I)
-            or (re.search(r"\b(tab(?:let)?s?|cap(?:sule)?s?|inj(?:ection)?s?|syr(?:up)?s?|neb(?:ulization)?s?)\b", pre_context, re.I) if pre_context else None)
+            re.search(r"\b(tab(?:let)?s?|cap(?:sule)?s?|inj(?:ection)?s?|syr(?:up)?s?|serab|serep|sirap|syp|neb(?:ulization)?s?)\b", clause, re.I)
+            or (re.search(r"\b(tab(?:let)?s?|cap(?:sule)?s?|inj(?:ection)?s?|syr(?:up)?s?|serab|serep|sirap|syp|neb(?:ulization)?s?)\b", pre_context, re.I) if pre_context else None)
         )
         if form_match:
             raw_form = form_match.group(1).lower().rstrip("s")
@@ -509,7 +547,7 @@ class ClinicalExtractor:
         elif clean_name.lower() in ("montelukast", "montair", "montair lc", "dolo", "paracetamol", "pantoprazole", "cetirizine", "combiflam", "azithromycin", "amlodipine"):
             form_val = "tablet"
 
-        # 2. Strength (Strict: Only if explicitly dictated, e.g. "650mg", "650", "40mg", "1g", "500")
+        # 2. Strength (Strict: Only if explicitly dictated, e.g. "650mg", "650", "six fifty mg", "40mg", "1g", "500")
         strength_val = None
         strength_source = None
         strength_status = "not_mentioned"
@@ -536,6 +574,25 @@ class ClinicalExtractor:
                     strength_status = "extracted"
 
             if not strength_val:
+                spoken_pats = "|".join(re.escape(k) for k in sorted(SPOKEN_STRENGTH_MAP.keys(), key=len, reverse=True))
+                # 1) Spoken strength with explicit unit
+                spoken_with_unit = re.search(r"\b(" + spoken_pats + r")\s*(mg|milli\s*grams?|g|mcg|gm)\b", clause, re.I)
+                # 2) Spoken strength without unit immediately following the drug name (e.g. "Paracetamol six fifty")
+                multi_word_pats = "|".join(re.escape(k) for k in ["six fifty", "six hundred fifty", "six hundred and fifty", "five hundred", "four hundred", "two fifty", "one twenty five", "one thousand"])
+                spoken_no_unit = re.search(r"\b" + re.escape(clean_name) + r"\s+(" + multi_word_pats + r")\b", clause, re.I)
+
+                if spoken_with_unit:
+                    norm_num = SPOKEN_STRENGTH_MAP[spoken_with_unit.group(1).lower()]
+                    strength_val = f"{norm_num}mg"
+                    strength_source = spoken_with_unit.group(0).strip()
+                    strength_status = "extracted"
+                elif spoken_no_unit:
+                    norm_num = SPOKEN_STRENGTH_MAP[spoken_no_unit.group(1).lower()]
+                    strength_val = f"{norm_num}mg"
+                    strength_source = spoken_no_unit.group(0).strip()
+                    strength_status = "extracted"
+
+            if not strength_val:
                 name_num_match = re.search(r"^([A-Za-z\-]+)\s+(\d{2,4})$", clean_name)
                 if name_num_match:
                     strength_val = f"{name_num_match.group(2)}mg"
@@ -548,12 +605,19 @@ class ClinicalExtractor:
         dose_val = None
         dose_source = None
         dose_match = (
-            re.search(r"\b(\d+|one|two|three)\s*(?:tablets?|capsules?|sachets?|teaspoons?|ml)\b", clause, re.I)
+            re.search(r"\b(\d+|one|two|three|four|five|ten)\s*(?:tablets?|capsules?|sachets?|teaspoons?|ml)\b", clause, re.I)
             or re.search(r"\b(\d+\s*ml)\b", clause, re.I)
+            or re.search(r"\b(ten\s*ml|five\s*ml|10\s*ml|5\s*ml)\b", clause, re.I)
         )
         if dose_match:
-            dose_val = dose_match.group(0).strip()
-            dose_source = dose_match.group(0).strip()
+            raw_dose = dose_match.group(0).strip()
+            if "ml" in raw_dose.lower():
+                raw_dose_norm = re.sub(r"\bten\s*ml\b", "10 ml", raw_dose, flags=re.I)
+                raw_dose_norm = re.sub(r"\bfive\s*ml\b", "5 ml", raw_dose_norm, flags=re.I)
+                dose_val = raw_dose_norm
+            else:
+                dose_val = raw_dose
+            dose_source = raw_dose
 
         # 4. Frequency
         freq_val = None
@@ -632,7 +696,7 @@ class ClinicalExtractor:
 
         return {
             "name": {"value": display_name, "source_text": drug_name, "status": name_status, "confidence": name_conf},
-            "raw_phrase": clause.strip(),
+            "raw_phrase": re.sub(r"[,\s.]*Para\.*$", "", clause, flags=re.I).strip(" ,.;"),
             "candidate_matches": candidate_matches,
             "strength": {"value": strength_val, "source_text": strength_source, "status": strength_status, "confidence": 0.90 if strength_val else None},
             "form": {"value": form_val, "source_text": form_source, "status": "extracted" if form_val else "not_mentioned", "confidence": 0.90 if form_val else None},

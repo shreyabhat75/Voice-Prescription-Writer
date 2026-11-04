@@ -334,3 +334,53 @@ class TestClinicalExtractor:
         # Should flag unverified source text
         unverified = [i for i in issues if i.get("code") == "UNVERIFIED_SOURCE_TEXT"]
         assert len(unverified) > 0
+
+    def test_shaya_mohanrat_spoken_numbered_dictation(self, extractor: ClinicalExtractor):
+        """Verify dictation with spoken numbers, 'tablet one/two', 'six fifty mg', 'Serab benedryl'."""
+        transcript = (
+            "Patient Shaya Mohanrat, 21 female. Fever from three days. "
+            "Medications, tablet one, paracetamol six fifty mg, one zero one, three days after food. "
+            "Para... Tablet two, montelicast zero zero one after food, three days. "
+            "Serab benedryl, one one one, ten ml, three days."
+        )
+
+        raw_res = extractor.extract(transcript)
+        draft = PrescriptionDraft.model_validate(raw_res)
+
+        # 1. Patient verification
+        assert draft.patient.name.value == "Shaya Mohanrat"
+        assert draft.patient.age.value == 21
+        assert draft.patient.sex.value == "female"
+
+        # 2. Clinical verification
+        assert "Fever from three days" in draft.clinical.chief_complaints.value
+
+        # 3. Medicine verification (All 3 separate ordered medicines)
+        assert len(draft.medicines) == 3
+
+        # Item 1: Paracetamol
+        m1 = draft.medicines[0]
+        assert m1.name.value == "Paracetamol"
+        assert m1.strength.value == "650mg"
+        assert m1.form.value == "tablet"
+        assert m1.frequency.value == "1-0-1"
+        assert m1.timing.value == "after food"
+        assert m1.duration.value == "3 days"
+
+        # Item 2: Montelukast (dictated as 'montelicast', flagged with candidate match)
+        m2 = draft.medicines[1]
+        assert "montelicast" in m2.name.value.lower() or "montelukast" in m2.name.value.lower()
+        assert m2.form.value == "tablet"
+        assert m2.frequency.value == "0-0-1"
+        assert m2.timing.value == "after food"
+        assert m2.duration.value == "3 days"
+        assert any("Montelukast" in c for c in m2.candidate_matches)
+
+        # Item 3: Benadryl (dictated as 'Serab benedryl')
+        m3 = draft.medicines[2]
+        assert "benedryl" in m3.name.value.lower() or "benadryl" in m3.name.value.lower()
+        assert m3.form.value == "syrup"
+        assert m3.dose.value == "10 ml"
+        assert m3.frequency.value == "1-1-1"
+        assert m3.duration.value == "3 days"
+        assert any("Benadryl" in c for c in m3.candidate_matches)
