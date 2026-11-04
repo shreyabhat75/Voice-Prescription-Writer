@@ -6,6 +6,7 @@ Provides an aiosqlite-compatible interface without external thread deadlock issu
 from __future__ import annotations
 
 import logging
+import os
 import sqlite3
 from contextlib import asynccontextmanager
 from pathlib import Path
