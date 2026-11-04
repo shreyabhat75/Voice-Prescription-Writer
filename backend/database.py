@@ -109,9 +109,8 @@ async def init_db(db_path: str | None = None) -> None:
     async with AsyncConnection(_db_path) as db:
         if _db_path != ":memory:":
             db._conn.execute("PRAGMA journal_mode=WAL;")
-        await db.executescript(migration_sql)
 
-        # Migrate existing tables for new columns gracefully
+        # Migrate existing tables for new columns gracefully before scripts run
         for col_name, col_type in [
             ("patient_id", "TEXT"),
             ("edited_transcript", "TEXT"),
@@ -122,6 +121,13 @@ async def init_db(db_path: str | None = None) -> None:
                 db._conn.execute(f"ALTER TABLE prescriptions ADD COLUMN {col_name} {col_type};")
             except sqlite3.OperationalError:
                 pass
+
+        await db.executescript(migration_sql)
+
+        try:
+            db._conn.execute("CREATE INDEX IF NOT EXISTS idx_prescriptions_patient ON prescriptions(patient_id);")
+        except sqlite3.OperationalError:
+            pass
 
         await db.commit()
 

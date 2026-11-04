@@ -34,7 +34,6 @@ CREATE TABLE IF NOT EXISTS prescriptions (
     verified_at     TEXT,
     FOREIGN KEY (patient_id) REFERENCES patients(id) ON DELETE SET NULL
 );
-CREATE INDEX IF NOT EXISTS idx_prescriptions_patient ON prescriptions(patient_id);
 
 CREATE TABLE IF NOT EXISTS medicine_items (
     id              TEXT PRIMARY KEY,

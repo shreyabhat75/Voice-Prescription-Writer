@@ -107,3 +107,4 @@ async def get_patient_audit_trail(patient_identifier: str):
             detail=f"Patient '{patient_identifier}' not found",
         )
     return await patient_svc.get_audit_trail(patient_id=patient.id)
+

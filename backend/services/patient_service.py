@@ -350,3 +350,4 @@ class PatientService:
             )
             for r in rows
         ]
+

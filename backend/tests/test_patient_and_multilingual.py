@@ -176,3 +176,4 @@ class TestPDFNamingAndFormatting:
         # 3. Fallback when name is unmentioned/demo
         fn3 = PrescriptionPDFGenerator.get_pdf_download_filename("Demo Patient", "2026-11-04", prescription_id="abcdef12-3456")
         assert fn3 == "Prescription_abcdef12_2026-11-04.pdf"
+
