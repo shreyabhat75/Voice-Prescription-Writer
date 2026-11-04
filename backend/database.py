@@ -19,9 +19,8 @@ _db_path: str | None = None
 
 
 def _resolve_db_path() -> str:
-    """Return the resolved database file path from settings."""
-    settings = get_settings()
-    return settings.DATABASE_PATH
+    """Return the resolved database file path from environment or settings."""
+    return os.environ.get("DATABASE_PATH") or get_settings().DATABASE_PATH
 
 
 def _load_migration_sql() -> str:
@@ -72,6 +71,10 @@ class AsyncConnection:
         )
         self._conn.row_factory = sqlite3.Row
         self._conn.execute("PRAGMA foreign_keys=ON;")
+        if path != ":memory:":
+            self._conn.execute("PRAGMA synchronous=NORMAL;")
+            self._conn.execute("PRAGMA cache_size=-64000;")  # 64MB memory cache
+            self._conn.execute("PRAGMA busy_timeout=5000;")
 
     def execute(self, sql: str, params: Any = ()) -> AsyncCursor:
         cur = self._conn.execute(sql, params)
@@ -103,6 +106,8 @@ async def init_db(db_path: str | None = None) -> None:
     migration_sql = _load_migration_sql()
 
     async with AsyncConnection(_db_path) as db:
+        if _db_path != ":memory:":
+            db._conn.execute("PRAGMA journal_mode=WAL;")
         await db.executescript(migration_sql)
         await db.commit()
 

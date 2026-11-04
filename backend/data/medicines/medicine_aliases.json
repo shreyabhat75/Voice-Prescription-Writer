@@ -211,6 +211,84 @@
       "default_form": "tablet",
       "default_route": "oral",
       "requires_confirmation_for": []
+    },
+    {
+      "canonical_name": "Augmentin",
+      "generic_name": "Amoxicillin and Potassium Clavulanate",
+      "brand_names": ["Augmentin", "Augmentin 625 Duo", "Clavam", "Moxikind-CV"],
+      "aliases": [
+        "augmentin",
+        "augmentin 625",
+        "clavam",
+        "clavam 625",
+        "moxikind cv",
+        "moxikind-cv"
+      ],
+      "candidate_matches": ["Augmentin 625 Duo", "Clavam 625"],
+      "default_form": "tablet",
+      "default_route": "oral",
+      "requires_confirmation_for": []
+    },
+    {
+      "canonical_name": "Telmisartan",
+      "generic_name": "Telmisartan",
+      "brand_names": ["Telma", "Telmikind", "Telpres"],
+      "aliases": [
+        "telmisartan",
+        "telma",
+        "telma 40",
+        "telma 20",
+        "telma 80",
+        "telmikind"
+      ],
+      "candidate_matches": ["Telma 40mg", "Telma 20mg"],
+      "default_form": "tablet",
+      "default_route": "oral",
+      "requires_confirmation_for": []
+    },
+    {
+      "canonical_name": "Ondansetron",
+      "generic_name": "Ondansetron",
+      "brand_names": ["Emeset", "Ondem", "Vomikind"],
+      "aliases": [
+        "ondansetron",
+        "emeset",
+        "ondem",
+        "vomikind"
+      ],
+      "candidate_matches": ["Emeset 4mg", "Ondem 4mg"],
+      "default_form": "tablet",
+      "default_route": "oral",
+      "requires_confirmation_for": []
+    },
+    {
+      "canonical_name": "Deriphyllin",
+      "generic_name": "Theophylline + Etophylline",
+      "brand_names": ["Deriphyllin", "Deriphyllin Retard"],
+      "aliases": [
+        "deriphyllin",
+        "deriphyllin retard",
+        "deriphyline"
+      ],
+      "candidate_matches": ["Deriphyllin Retard 150mg", "Deriphyllin Retard 300mg"],
+      "default_form": "tablet",
+      "default_route": "oral",
+      "requires_confirmation_for": ["deriphyline"]
+    },
+    {
+      "canonical_name": "Ambrodil-S",
+      "generic_name": "Ambroxol + Salbutamol",
+      "brand_names": ["Ambrodil-S", "Ambrodil", "Ascoril"],
+      "aliases": [
+        "ambrodil-s",
+        "ambrodil s",
+        "ambrodil",
+        "ascoril"
+      ],
+      "candidate_matches": ["Ambrodil-S Syrup", "Ascoril Syrup"],
+      "default_form": "syrup",
+      "default_route": "oral",
+      "requires_confirmation_for": []
     }
   ]
 }

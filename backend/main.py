@@ -22,6 +22,7 @@ from backend.routers.prescriptions import router as prescriptions_router
 from backend.routers.structuring import router as structuring_router
 from backend.routers.transcription import router as transcription_router
 from backend.routers.voice_edit import router as voice_edit_router
+from backend.routers.websocket_stream import router as ws_stream_router
 from backend.services.stt.factory import get_stt_provider
 
 logging.basicConfig(
@@ -71,6 +72,7 @@ app.include_router(confirmation_router)
 app.include_router(pdf_router)
 app.include_router(feedback_router)
 app.include_router(history_router)
+app.include_router(ws_stream_router)
 
 
 @app.get("/health", tags=["Health"])

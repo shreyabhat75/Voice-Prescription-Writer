@@ -112,3 +112,7 @@ CREATE TABLE IF NOT EXISTS confirmation_records (
     FOREIGN KEY (prescription_id) REFERENCES prescriptions(id) ON DELETE CASCADE
 );
 CREATE INDEX IF NOT EXISTS idx_confirmation_rx ON confirmation_records(prescription_id);
+
+-- Performance Optimization Indexes
+CREATE INDEX IF NOT EXISTS idx_prescriptions_status_date ON prescriptions(status, updated_at DESC);
+CREATE INDEX IF NOT EXISTS idx_medicine_items_rx_idx ON medicine_items(prescription_id, item_index);
