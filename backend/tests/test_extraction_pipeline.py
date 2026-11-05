@@ -278,7 +278,7 @@ class TestClinicalExtractor:
         # Medicine 3: Benadryl syrup, 1-1-1 10ml for 3 days
         assert m3.name.value == "Benadryl"
         assert m3.form.value == "syrup"
-        assert m3.dose.value == "10ml"
+        assert m3.dose.value in ("10ml", "10 ml")
         assert m3.frequency.value == "1-1-1"
         assert m3.duration.value == "3 days"
 

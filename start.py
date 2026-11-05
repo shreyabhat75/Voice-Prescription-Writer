@@ -76,6 +76,8 @@ def start_backend():
             "--port",
             "8000",
             "--reload",
+            "--reload-dir",
+            "backend",
         ],
         cwd=str(PROJECT_ROOT),
         env=env,

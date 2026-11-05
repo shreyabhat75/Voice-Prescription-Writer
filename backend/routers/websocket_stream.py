@@ -22,6 +22,16 @@ router = APIRouter(tags=["WebSocket Audio Streaming"])
 svc = PrescriptionService()
 
 
+def is_ws_connected(ws: Any) -> bool:
+    """Safely check if a websockets connection is open across websockets library versions."""
+    if ws is None:
+        return False
+    state = getattr(ws, "state", None)
+    if state is not None:
+        return str(state).endswith("OPEN") or state == 1
+    return bool(getattr(ws, "open", not getattr(ws, "closed", True)))
+
+
 @router.websocket("/ws/transcribe/{prescription_id}")
 async def websocket_transcribe(websocket: WebSocket, prescription_id: str):
     """Bidirectional WebSocket streaming endpoint for live audio dictation."""
@@ -109,8 +119,11 @@ async def websocket_transcribe(websocket: WebSocket, prescription_id: str):
                 chunk = message["bytes"]
                 audio_chunks.append(chunk)
 
-                if deepgram_ws and deepgram_ws.open:
-                    await deepgram_ws.send(chunk)
+                if is_ws_connected(deepgram_ws):
+                    try:
+                        await deepgram_ws.send(chunk)
+                    except Exception as e:
+                        logger.debug("Failed sending chunk to Deepgram WebSocket: %s", e)
                 else:
                     # Echo acknowledgment for mock/local testing
                     await websocket.send_json({
@@ -135,7 +148,7 @@ async def websocket_transcribe(websocket: WebSocket, prescription_id: str):
         logger.error("Error during live WebSocket streaming: %s", e)
 
     # Clean up Deepgram connection
-    if deepgram_ws and deepgram_ws.open:
+    if is_ws_connected(deepgram_ws):
         try:
             await deepgram_ws.send(json.dumps({"type": "CloseStream"}))
             await asyncio.sleep(0.5)

@@ -145,6 +145,7 @@ STOP_WORDS: set[str] = {
     "one", "two", "four", "five", "six", "seven", "eight", "nine", "ten",
     "tablet", "tablets", "capsule", "capsules", "syrup", "injection", "sachet", "teaspoon",
     "times", "time", "day", "days", "daily", "food", "morning", "night", "bedtime", "breakfast",
+    "din", "hafte", "mahina", "dina", "dinagalu", "vaara",
 }
 
 # Standard frequency abbreviations and equivalents
@@ -160,7 +161,7 @@ FREQ_PATTERNS = [
     (r"\b(?:twice daily|twice a day|2 times a day|din mein do baar|do baar|dinakke eradu sala|eradu sala|morning and night|morning and evening|subah shaam|bd|bid|bot)\b", "BD"),
     (r"\b(?:once daily|once a day|1 time a day|din mein ek baar|ek baar|dinakke ondhu sala|ondhu sala|subah|beligge|in the morning|in morning|morning|od)\b", "OD"),
     (r"\b(?:four times a day|4 times a day|qid)\b", "QID"),
-    (r"\b(?:at night|bedtime|raat ko|raathri|raatri|hs)\b", "HS"),
+    (r"\b(?:at night|bedtime|night alli|nightalli|raat ko|raathri|raatri|hs)\b", "HS"),
     (r"\b(?:as needed|when required|for pain|sos)\b", "SOS"),
     (r"\b(?:immediately|stat)\b", "STAT"),
 ]
@@ -168,10 +169,11 @@ FREQ_PATTERNS = [
 # Standard food timings
 TIMING_PATTERNS = [
     (r"\b(?:before breakfast|khali pet|subah khali pet|empty stomach)\b", "before breakfast"),
+    (r"\b(?:after breakfast|tiffin aadmele|nashte ke baad)\b", "after breakfast"),
     (r"\b(?:before food|before meals|khana khane se pehle|oota munche|ootakku munche|ootakkinta modalu|ac)\b", "before food"),
     (r"\b(?:after food|after meals|khana khane ke baad|oota aadmele|food aadmele|dadmalae|aadmele|pc)\b", "after food"),
     (r"\b(?:with food|during meals)\b", "with food"),
-    (r"\b(?:at bedtime|night|at night|raat ko|raathri|raatri|hs)\b", "at bedtime"),
+    (r"\b(?:at bedtime|night|at night|night alli|nightalli|raat ko|raathri|raatri|hs)\b", "at bedtime"),
 ]
 
 # Routes
@@ -208,20 +210,48 @@ class ClinicalExtractor:
         name_source = None
         name_status = "not_mentioned"
 
-        name_match = (
-            re.search(r"\b(?:patient(?:'s)?\s*(?:named|names?|name)?(?:\s+is)?|patient\s+ka\s+naam|^names?\s*[:,-]?)\s*[:,-]?\s*([A-Za-z]+(?:\s+[A-Za-z]+){0,3})", text, re.I)
-            or re.search(r"^([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)[,\s]+(\d{1,2}(?:-\d+)?)\b", text)
-            or re.search(r"^([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)\s*,\s*\d+\s*(?:male|female|m|f)\b", text)
+        CLINICAL_VERBS_AND_SYMPTOMS = {
+            "has", "have", "had", "is", "was", "presents", "presented", "came", "comes",
+            "complaining", "complains", "complained", "suffering", "suffers", "reported",
+            "diagnosed", "fever", "cough", "cold", "headache", "vomiting", "pain",
+            "with", "and", "c/o", "mild", "severe", "acute", "chronic", "body", "ache",
+            "acidity", "breathlessness", "gas", "loose", "motion", "tablet", "medicine"
+        }
+
+        # Step 1A: Explicit name declarations anywhere in the transcript:
+        # e.g. "The patient name is Tara Krishnan", "Patient name: Rajesh Kumar", "Patient name, Avanti Rao", "Patient named Sana"
+        explicit_name_match = (
+            re.search(r"\b(?:the\s+)?patient(?:'s)?\s+(?:named\s+|names?\b\s*(?:is\s*)?[:,-]?\s*)([A-Za-z]+(?:\s+[A-Za-z]+){0,3})\b", text, re.I)
+            or re.search(r"\bpatient\s+ka\s+naam\s+(?:hai\s+)?[:,-]?\s*([A-Za-z]+(?:\s+[A-Za-z]+){0,3})\b", text, re.I)
+            or re.search(r"\b(?:named)\s+([A-Za-z]+(?:\s+[A-Za-z]+){0,3})\b", text, re.I)
         )
-        if name_match:
-            candidate = name_match.group(1).strip()
-            # Strip prefixes like 'names in', 'name', 'ka naam', 'in ', 'named'
-            candidate = re.sub(r"^(?:ka\s+naam\s+|names?\s+is\s+|names?\s+in\s+|named\s+|names?\s*[:,-]?\s*|in\s+)", "", candidate, flags=re.I).strip()
-            candidate = re.sub(r"\b(?:age|aged|years?|saal|is|hai|chief|complaint)\b.*$", "", candidate, flags=re.I).strip(" ,.-")
-            if candidate and candidate.lower() not in ("name", "names", "age", "male", "female", "test", "demo", "none"):
+        if explicit_name_match:
+            candidate = explicit_name_match.group(1).strip()
+            candidate = re.sub(r"^(?:ka\s+naam\s+|names?\s*is\s+|named\s+|names?\s*[:,-]?\s*)", "", candidate, flags=re.I).strip()
+            candidate = re.sub(r"\b(?:age|aged|years?|saal|is|hai|chief|complaint|female|male|c/o)\b.*$", "", candidate, flags=re.I).strip(" ,.-")
+            first_tok = candidate.split()[0].lower() if candidate else ""
+            if candidate and first_tok not in CLINICAL_VERBS_AND_SYMPTOMS and candidate.lower() not in ("name", "names", "age", "male", "female", "test", "demo", "none"):
                 name_val = candidate
-                name_source = name_match.group(0).strip()
+                name_source = explicit_name_match.group(0).strip()
                 name_status = "extracted"
+
+        # Step 1B: If no explicit declaration, check beginning of string: "Patient Rajesh Kumar...", "Patient, Nikhil...", "Shreya Bhatt 21..."
+        name_match = None
+        if not name_val:
+            name_match = (
+                re.search(r"^patient\s*[:,-]?\s*([A-Za-z]+(?:\s+[A-Za-z]+){0,3})", text, re.I)
+                or re.search(r"^([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)[,\s]+(\d{1,2}(?:-\d+)?)\b", text)
+                or re.search(r"^([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)\s*,\s*\d+\s*(?:male|female|m|f)\b", text)
+            )
+            if name_match:
+                candidate = name_match.group(1).strip()
+                candidate = re.sub(r"^(?:patient\s*[:,-]?\s*)", "", candidate, flags=re.I).strip()
+                candidate = re.sub(r"\b(?:age|aged|years?|saal|is|hai|chief|complaint|c/o|female|male)\b.*$", "", candidate, flags=re.I).strip(" ,.-")
+                first_tok = candidate.split()[0].lower() if candidate else ""
+                if candidate and first_tok not in CLINICAL_VERBS_AND_SYMPTOMS and candidate.lower() not in ("name", "names", "age", "male", "female", "test", "demo", "none"):
+                    name_val = candidate
+                    name_source = name_match.group(0).strip()
+                    name_status = "extracted"
 
         # 2. Age
         age_val = None
@@ -245,7 +275,7 @@ class ClinicalExtractor:
                 pass
 
         # Check if name match captured age as group 2 (e.g. "Sintana Bhatt 22-1" or "Shreya Bhatt 21")
-        if name_match and len(name_match.groups()) > 1 and name_match.group(2):
+        if not age_val and name_match and len(name_match.groups()) > 1 and name_match.group(2):
             raw_age_str = name_match.group(2).strip()
             age_source = raw_age_str
             if "-" in raw_age_str:
@@ -338,36 +368,50 @@ class ClinicalExtractor:
         cc_source = None
         cc_status = "not_mentioned"
 
-        cc_match = re.search(
-            r"\b(?:chief\s+complaints?|complaints?(?:\s+of)?|c/o|complaining\s+of|pet mein dard)\s*[:,-]?\s*([^.]+?)(?=\.\s+|\bdiagnosis\b|\bprescription\b|\bdawai\b|\btab\b|\binj\b|\bsyrup\b|$)",
+        # Check explicit "Patient has / presents with / complaining of..."
+        patient_has_match = re.search(
+            r"\b(?:patient\s+has|patient\s+is\s+having|patient\s+presents\s+with|patient\s+is\s+suffering\s+from|patient\s+came\s+with)\s+([^.]+?)(?=\.\s+|\bdiagnosis\b|\bprescription\b|\bdawai\b|\btab\b|\binj\b|\bsyrup\b|\bmedicines?\b|$)",
             text,
             re.I,
         )
-        if cc_match:
-            cc_val = cc_match.group(1).strip()
-            cc_source = cc_match.group(0).strip()
+        if patient_has_match:
+            raw_has = patient_has_match.group(1).strip()
+            raw_has_clean = re.sub(r"^(?:a|an)\s+", "", raw_has, flags=re.I).strip()
+            cc_val = raw_has_clean
+            cc_source = patient_has_match.group(0).strip()
             cc_status = "extracted"
-        else:
-            symp_match = (
-                re.search(
-                    r"\b((?:diary\s+of|diarrhea|diarrhoea|dysentery|dessentry|dissing\s+tree|loose\s+motion|lose\s+motion|luzmotion|fever|jwara|bukhar|acidity|headache|tale\s+novu|sardard|sar\s+dard|vomiting|ulti|cough|khansi|kasa|kaasa|breathlessness|pet\s+mein\s+dard|pet\s+dard|hotte\s+novu)(?:[,\s]+(?:and|from|for|since|of)[,\s]+)?(?:body\s+ache|gas\s+ban\s+rahi\s+hai|gastric\s+pain)?(?:\s*(?:from|for|since|of)?\s*(?:\d+|one|two|three|four|five|six|seven|eight|nine|ten|teen|do|ek|char|paanch|ondhu|eradu|mooru|naalku|aidu)\s*(?:days?|weeks?|months?|din|hafte|dina|dinagalu|vaara|week|month))?)\b",
-                    text,
-                    re.I,
-                )
+
+        if not cc_val:
+            cc_match = re.search(
+                r"\b(?:chief\s+complaints?|complaints?(?:\s+of)?|c/o|complaining\s+of|pet mein dard)\s*[:,-]?\s*([^.]+?)(?=\.\s+|\bdiagnosis\b|\bprescription\b|\bdawai\b|\btab\b|\binj\b|\bsyrup\b|$)",
+                text,
+                re.I,
             )
-            if symp_match:
-                raw_symp = symp_match.group(1).strip()
-                cc_source = raw_symp
+            if cc_match:
+                cc_val = cc_match.group(1).strip()
+                cc_source = cc_match.group(0).strip()
                 cc_status = "extracted"
-                cc_val = raw_symp
-                # Clean up speech artifacts
-                if "diary of" in raw_symp.lower():
-                    cc_val = re.sub(r"diary\s+of", "Diarrhea for", raw_symp, flags=re.I)
-                    cc_status = "needs_review"
-                elif "luzmotion" in raw_symp.lower() or "lose motion" in raw_symp.lower():
-                    cc_val = re.sub(r"\b(?:luzmotion|lose\s+motion)\b", "loose motion", raw_symp, flags=re.I)
-                elif "dessentry" in raw_symp.lower():
-                    cc_val = re.sub(r"\bdessentry\b", "dysentery", raw_symp, flags=re.I)
+            else:
+                symp_match = (
+                    re.search(
+                        r"\b((?:mild\s+|severe\s+|high\s+|dry\s+|productive\s+|acute\s+|chronic\s+)?(?:diary\s+of|diarrhea|diarrhoea|dysentery|dessentry|dissing\s+tree|loose\s+motion|lose\s+motion|luzmotion|fever|jwara|bukhar|acidity|headache|tale\s+novu|sardard|sar\s+dard|vomiting|ulti|cough|khansi|kasa|kaasa|breathlessness|pet\s+mein\s+dard|pet\s+dard|hotte\s+novu)(?:[,\s]+(?:and|from|for|since|of)[,\s]+)?(?:mild\s+|severe\s+)?(?:body\s+ache|gas\s+ban\s+rahi\s+hai|gastric\s+pain|fever|headache|cough|cold|vomiting)?(?:\s*(?:from|for|since|of)?\s*(?:\d+|one|two|three|four|five|six|seven|eight|nine|ten|teen|do|ek|char|paanch|ondhu|eradu|mooru|naalku|aidu)?\s*(?:days?|weeks?|months?|din|hafte|dina|dinagalu|vaara|morning|yesterday|today|night|week|month))?)\b",
+                        text,
+                        re.I,
+                    )
+                )
+                if symp_match:
+                    raw_symp = symp_match.group(1).strip()
+                    cc_source = raw_symp
+                    cc_status = "extracted"
+                    cc_val = raw_symp
+                    # Clean up speech artifacts
+                    if "diary of" in raw_symp.lower():
+                        cc_val = re.sub(r"diary\s+of", "Diarrhea for", raw_symp, flags=re.I)
+                        cc_status = "needs_review"
+                    elif "luzmotion" in raw_symp.lower() or "lose motion" in raw_symp.lower():
+                        cc_val = re.sub(r"\b(?:luzmotion|lose\s+motion)\b", "loose motion", raw_symp, flags=re.I)
+                    elif "dessentry" in raw_symp.lower():
+                        cc_val = re.sub(r"\bdessentry\b", "dysentery", raw_symp, flags=re.I)
 
         # 2. Diagnosis (STRICT NON-INFERENCE: Only if explicitly dictated)
         dx_val = None
@@ -479,13 +523,18 @@ class ClinicalExtractor:
         terms = sorted(list(set(all_terms + list(PHONETIC_DRUG_MAP.keys()) + ["pan d", "PAN D", "citrazine", "cough syrup"])), key=len, reverse=True)
         terms_pat = "|".join(map(re.escape, terms))
 
-        DOSE_WORDS = {"one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "single", "half", "1", "2", "3", "4", "5", "10", "the", "this", "that", "for"}
+        DOSE_WORDS = {
+            "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "single", "half",
+            "1", "2", "3", "4", "5", "10", "the", "this", "that", "for",
+            "ek", "do", "teen", "char", "paanch", "ondhu", "ondu", "eradu", "mooru", "naalku", "aidu"
+        }
 
         med_anchor_pattern = re.compile(
             r"(?:"
             r"\b(?:first|second|third|fourth|fifth|1st|2nd|3rd|4th|5th)\s*(?:medicine|medication|item|one)?\s*(?:is)?\s*[:,-]?\s*(?:(?:tab(?:let)?s?|cap(?:sule)?s?|syr(?:up)?s?|inj(?:ection)?s?|serab|serep|sirap|syp)\s*[:,-]?\s*)?(?:(?:take\s+)?medicine\s+[A-Za-z0-9]|cough\s+syrup|" + terms_pat + r"|[A-Za-z][A-Za-z0-9\-_]*)"
             r"|\b(?:tab(?:let)?s?|cap(?:sule)?s?|inj(?:ection)?s?|syr(?:up)?s?|serab|serep|sirap|syp)\s*[:,-]?\s*(?:[#№]?\s*(?:one|two|three|four|five|\d+)\s*[:,-]?\s*)?(?:(?:take\s+)?medicine\s+[A-Za-z0-9]|cough\s+syrup|" + terms_pat + r"|[A-Za-z][A-Za-z0-9\-_]*)"
             r"|\b(?:take\s+)?medicine\s+[A-Za-z0-9]\b"
+            r"|\b(?:medicines?|medications?|dawai)\s*(?:owe|one|#?\s*(?:one|two|three|four|five|\d+)|[A-Za-z0-9\-_]+)?\b"
             r"|\b(" + terms_pat + r")\b"
             r")",
             re.I
@@ -523,9 +572,11 @@ class ClinicalExtractor:
                 ord_sub = ord_sub[form_sub_match.end():].strip()
 
             ord_sub = re.sub(r"^take\s+", "", ord_sub, flags=re.I).strip()
-            if not ord_sub or ord_sub.lower() in ("tablet", "syrup", "capsule", "medicine", "medication"):
+            if not ord_sub or ord_sub.lower() in ("tablet", "syrup", "capsule", "medicine", "medication", "medicines", "medications", "dawai"):
                 continue
             if ord_sub.lower() in STOP_WORDS or ord_sub.lower() in DOSE_WORDS or ord_sub.isdigit():
+                continue
+            if re.search(r"^(?:medicines?|medications?|dawai)\s*[:,-]?\s*(?:tab|cap|syr|inj|serab)", ord_sub, re.I):
                 continue
 
             drug_name = ord_sub.strip(" ,.:;")
@@ -551,6 +602,10 @@ class ClinicalExtractor:
 
             # Clean trailing ordinals from clause: e.g. "... for two days. Second" -> strip "Second"
             clause = re.sub(r"\.\s*(?:First|Second|Third|Fourth|Fifth|1st|2nd|3rd|4th|5th)\b.*$", "", clause, flags=re.I).strip(" ,.;")
+
+            # Strip trailing non-medication sentences that appear after medicines (e.g., patient details, advice)
+            clause = re.sub(r"\.\s*(?:The\s+)?patient\s+.*$", "", clause, flags=re.I).strip(" ,.;")
+            clause = re.sub(r"\.\s*(?:Advice|Advise|Follow\s*up|Review|Investigations?)\s*.*$", "", clause, flags=re.I).strip(" ,.;")
 
             # Check if this clause was cancelled by doctor self-correction
             if re.search(r"\b(?:no[,\s\.]*sorry|sorry[,\s\.]*no|no[,\s\.]*wait|scratch\s+that)\b", clause, re.I) and i + 1 < len(valid_anchors):
@@ -694,7 +749,8 @@ class ClinicalExtractor:
         if dose_match:
             raw_dose = dose_match.group(0).strip()
             if "ml" in raw_dose.lower():
-                raw_dose_norm = re.sub(r"\bten\s*ml\b", "10 ml", raw_dose, flags=re.I)
+                raw_dose_norm = re.sub(r"(\d+)\s*ml", r"\1 ml", raw_dose, flags=re.I)
+                raw_dose_norm = re.sub(r"\bten\s*ml\b", "10 ml", raw_dose_norm, flags=re.I)
                 raw_dose_norm = re.sub(r"\bfive\s*ml\b", "5 ml", raw_dose_norm, flags=re.I)
                 dose_val = raw_dose_norm
             else:
