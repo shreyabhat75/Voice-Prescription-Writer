@@ -86,3 +86,20 @@ export interface PrescriptionListItem {
   confirmed_at: string | null;
 }
 
+export interface WordToken {
+  word: string;
+  start: number;
+  end: number;
+  confidence: number;
+}
+
+export interface AuditEntry {
+  timestamp: string;
+  action: 'dictation' | 'structuring' | 'doctor_edit' | 'confirmed' | 'pdf_downloaded';
+  actor: string;
+  detail?: string;
+}
+
+export type HistoryFilter = 'all' | 'needs_review' | 'confirmed' | 'today';
+
+export type DictationLanguage = 'en-IN' | 'hinglish' | 'kanglish' | 'kn';

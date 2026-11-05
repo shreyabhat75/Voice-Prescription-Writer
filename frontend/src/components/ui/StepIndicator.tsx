@@ -1,70 +1,66 @@
 import React from 'react';
-import { Check, Mic, FileText, Cpu, CheckCircle } from 'lucide-react';
-import { PrescriptionStatus } from '../../types';
+import { Mic, FileSearch, Cpu, CheckCircle } from 'lucide-react';
+
+type Step = 'recording' | 'review' | 'structuring' | 'done';
 
 interface StepIndicatorProps {
-  currentStatus: PrescriptionStatus;
+  currentStatus: Step;
 }
 
+const STEPS: { key: Step; label: string; icon: React.ReactNode }[] = [
+  { key: 'recording', label: 'Dictate', icon: <Mic className="w-3.5 h-3.5" /> },
+  { key: 'review',    label: 'Review',  icon: <FileSearch className="w-3.5 h-3.5" /> },
+  { key: 'structuring', label: 'AI Extract', icon: <Cpu className="w-3.5 h-3.5" /> },
+  { key: 'done',      label: 'Done',    icon: <CheckCircle className="w-3.5 h-3.5" /> },
+];
+
+const ORDER: Step[] = ['recording', 'review', 'structuring', 'done'];
+
 export const StepIndicator: React.FC<StepIndicatorProps> = ({ currentStatus }) => {
-  const steps = [
-    { id: 'recording', label: '1. Dictate', icon: Mic },
-    { id: 'transcribing', label: '2. Transcribe', icon: FileText },
-    { id: 'structuring', label: '3. Structure AI', icon: Cpu },
-    { id: 'review', label: '4. Doctor Review', icon: CheckCircle },
-    { id: 'confirmed', label: '5. Confirmed', icon: Check },
-  ];
-
-  const statusOrder: Record<PrescriptionStatus, number> = {
-    recording: 0,
-    transcribing: 1,
-    structuring: 2,
-    review: 3,
-    confirmed: 4,
-  };
-
-  const currentIndex = statusOrder[currentStatus] ?? 0;
+  const currentIdx = ORDER.indexOf(currentStatus);
 
   return (
-    <div className="w-full max-w-3xl mx-auto py-4">
-      <div className="flex items-center justify-between relative">
-        <div className="absolute top-1/2 left-0 w-full h-1 bg-slate-200 -translate-y-1/2 z-0" />
-        <div
-          className="absolute top-1/2 left-0 h-1 bg-blue-600 -translate-y-1/2 z-0 transition-all duration-500"
-          style={{ width: `${(currentIndex / (steps.length - 1)) * 100}%` }}
-        />
+    <div className="flex items-center gap-0 w-full max-w-lg mx-auto">
+      {STEPS.map((step, idx) => {
+        const isDone    = idx < currentIdx;
+        const isActive  = idx === currentIdx;
+        const isPending = idx > currentIdx;
 
-        {steps.map((step, idx) => {
-          const isCompleted = idx < currentIndex;
-          const isCurrent = idx === currentIndex;
-          const Icon = step.icon;
-
-          let circleStyle = 'bg-white border-2 border-slate-300 text-slate-400';
-          if (isCompleted) {
-            circleStyle = 'bg-blue-600 border-2 border-blue-600 text-white';
-          } else if (isCurrent) {
-            circleStyle = 'bg-white border-2 border-blue-600 text-blue-600 ring-4 ring-blue-100';
-          }
-
-          return (
-            <div key={step.id} className="relative z-10 flex flex-col items-center">
+        return (
+          <React.Fragment key={step.key}>
+            {/* Step node */}
+            <div className="flex flex-col items-center gap-1 flex-shrink-0">
               <div
-                className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${circleStyle}`}
+                className={`w-7 h-7 rounded-full flex items-center justify-center transition-all duration-300 ${
+                  isDone
+                    ? 'bg-emerald-500 text-white'
+                    : isActive
+                    ? 'bg-blue-600 text-white ring-4 ring-blue-100'
+                    : 'bg-slate-100 text-slate-400'
+                }`}
               >
-                {isCompleted ? <Check className="w-5 h-5" /> : <Icon className="w-5 h-5" />}
+                {step.icon}
               </div>
               <span
-                className={`mt-2 text-xs font-medium whitespace-nowrap ${
-                  isCurrent ? 'text-blue-700 font-semibold' : isCompleted ? 'text-slate-700' : 'text-slate-400'
+                className={`text-[10px] font-semibold whitespace-nowrap ${
+                  isDone ? 'text-emerald-600' : isActive ? 'text-blue-700' : 'text-slate-400'
                 }`}
               >
                 {step.label}
               </span>
             </div>
-          );
-        })}
-      </div>
+
+            {/* Connector line */}
+            {idx < STEPS.length - 1 && (
+              <div
+                className={`flex-1 h-0.5 mx-1 mb-4 transition-all duration-500 ${
+                  idx < currentIdx ? 'bg-emerald-400' : 'bg-slate-200'
+                }`}
+              />
+            )}
+          </React.Fragment>
+        );
+      })}
     </div>
   );
 };
-
