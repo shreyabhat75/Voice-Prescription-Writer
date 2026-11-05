@@ -19,7 +19,7 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
       - name: Run backend tests
-        run: python -m pytest backend/tests/ -q
+        run: python -m pytest backend/tests/ -q -p no:asyncio
 
   frontend-build:
     runs-on: ubuntu-latest
