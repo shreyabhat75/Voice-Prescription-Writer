@@ -142,19 +142,39 @@ class PrescriptionService:
         val_issues = json.loads(row["validation_json"]) if row["validation_json"] else []
         clar_questions = json.loads(row["clarification_json"]) if row["clarification_json"] else []
 
+        # Resolve permanent patient ID if linked
+        row_keys = row.keys() if hasattr(row, "keys") else []
+        pid = row["patient_id"] if "patient_id" in row_keys else None
+        perm_pid = None
+        if pid:
+            async with get_db() as db:
+                cur = await db.execute("SELECT patient_id FROM patients WHERE id = ?", (pid,))
+                p_row = await cur.fetchone()
+                if p_row:
+                    perm_pid = p_row["patient_id"]
+
+        edited_tx = row["edited_transcript"] if "edited_transcript" in row_keys else None
+        pdf_path = row["pdf_path"] if "pdf_path" in row_keys else None
+        verified_at = row["verified_at"] if "verified_at" in row_keys else (row["confirmed_at"] if row["status"] == "confirmed" else None)
+
         return PrescriptionResponse(
             id=row["id"],
+            patient_id=pid,
+            permanent_patient_id=perm_pid,
             status=row["status"],
             patient=patient,
             clinical=clinical,
             medicines=medicines,
             raw_transcript=row["raw_transcript"],
+            edited_transcript=edited_tx,
+            pdf_path=pdf_path,
             audio_url=row["audio_url"],
             validation_issues=val_issues,
             clarification_questions=clar_questions,
             created_at=row["created_at"],
             updated_at=row["updated_at"],
             confirmed_at=row["confirmed_at"],
+            verified_at=verified_at,
             version=row["version"],
         )
 
@@ -296,6 +316,14 @@ class PrescriptionService:
         if not transcript:
             raise ValueError("No transcript available to structure.")
 
+        # Preserve original raw transcript vs doctor-edited transcript
+        if transcript_override and rx.raw_transcript and transcript_override.strip() != rx.raw_transcript.strip():
+            raw_tx = rx.raw_transcript
+            edited_tx = transcript_override.strip()
+        else:
+            raw_tx = rx.raw_transcript or transcript
+            edited_tx = rx.edited_transcript
+
         # 1. LLM Extraction
         llm_result = await self.llm_provider.extract_prescription(transcript)
         extracted_data = json.loads(llm_result.raw_json)
@@ -337,7 +365,7 @@ class PrescriptionService:
                     ),
                 )
 
-            # Update prescription record
+            # Update prescription record preserving raw and edited transcripts separately
             await db.execute(
                 """
                 UPDATE prescriptions
@@ -345,6 +373,7 @@ class PrescriptionService:
                     patient_json = ?,
                     clinical_json = ?,
                     raw_transcript = ?,
+                    edited_transcript = ?,
                     validation_json = ?,
                     clarification_json = ?,
                     version = ?,
@@ -354,7 +383,8 @@ class PrescriptionService:
                 (
                     normalized_draft.patient.model_dump_json(),
                     normalized_draft.clinical.model_dump_json(),
-                    transcript,
+                    raw_tx,
+                    edited_tx,
                     json.dumps(val_issues),
                     json.dumps(clar_questions),
                     new_version,
@@ -615,20 +645,49 @@ class PrescriptionService:
         """Mark prescription as confirmed by the doctor.
 
         Compulsory gate before PDF generation is allowed.
+        Links to permanent patient identity and logs audit trail.
         """
         rx = await self.get_prescription(prescription_id)
         if not rx:
             raise ValueError(f"Prescription {prescription_id} not found")
 
         now = datetime.now().isoformat()
+
+        # Link to permanent patient profile
+        patient_record = None
+        patient_name = rx.patient.name.value if (rx.patient and rx.patient.name) else None
+        if patient_name and patient_name.lower() not in ("demo patient", "unnamed patient"):
+            try:
+                from backend.services.patient_service import PatientService
+                patient_svc = PatientService()
+                patient_age = rx.patient.age.value if rx.patient.age else None
+                patient_gender = rx.patient.sex.value if rx.patient.sex else None
+                patient_record = await patient_svc.get_or_create_patient(
+                    name=patient_name,
+                    age=patient_age,
+                    gender=patient_gender,
+                    actor_id=doctor_name,
+                )
+                await patient_svc.log_audit(
+                    action="prescription_verified",
+                    prescription_id=prescription_id,
+                    patient_id=patient_record.id,
+                    actor_id=doctor_name,
+                    details=f"Doctor {doctor_name} verified prescription #{prescription_id} for {patient_record.patient_id} ({patient_name})",
+                )
+            except Exception as ex:
+                logger.warning("Patient record linkage during confirmation failed: %s", ex)
+
+        patient_uuid = patient_record.id if patient_record else None
+
         async with get_db() as db:
             await db.execute(
                 """
                 UPDATE prescriptions
-                SET status = 'confirmed', confirmed_at = ?, updated_at = ?
+                SET status = 'confirmed', confirmed_at = ?, verified_at = ?, patient_id = ?, updated_at = ?
                 WHERE id = ?
                 """,
-                (now, now, prescription_id),
+                (now, now, patient_uuid, now, prescription_id),
             )
             # Create confirmation audit record
             await db.execute(
@@ -660,7 +719,20 @@ class PrescriptionService:
             raise ValueError(f"Prescription {prescription_id} not found")
 
         # Calls PDF generator which enforces confirmation check
-        pdf_path = self.pdf_generator.generate(rx)
+        pdf_path = self.pdf_generator.generate(
+            rx,
+            patient_id=rx.permanent_patient_id,
+        )
+        try:
+            now = datetime.now().isoformat()
+            async with get_db() as db:
+                await db.execute(
+                    "UPDATE prescriptions SET pdf_path = ?, updated_at = ? WHERE id = ?",
+                    (pdf_path, now, prescription_id),
+                )
+                await db.commit()
+        except Exception:
+            pass
         return pdf_path
 
     async def get_history(self, prescription_id: str) -> list[dict[str, Any]]:

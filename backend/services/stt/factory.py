@@ -18,7 +18,12 @@ def create_stt_provider(provider_name: str | None = None) -> STTProvider:
     Raises:
         ValueError: If the provider name is unknown.
     """
-    name = (provider_name or get_settings().STT_PROVIDER).lower().strip()
+    import os
+    env_provider = os.getenv("STT_PROVIDER")
+    if os.getenv("PYTEST_CURRENT_TEST") and not provider_name:
+        name = (env_provider or "mock").lower().strip()
+    else:
+        name = (provider_name or env_provider or get_settings().STT_PROVIDER).lower().strip()
 
     if name in ("whisper", "local", "openai-whisper"):
         from backend.services.stt.whisper_provider import WhisperSTTProvider

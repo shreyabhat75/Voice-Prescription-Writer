@@ -179,4 +179,29 @@ export const apiClient = {
     const res = await api.post(`/prescriptions/${prescriptionId}/feedback`, feedback);
     return res.data;
   },
+
+  // Patient Records & Medical History
+  async searchPatients(params: {
+    query?: string;
+    patient_id?: string;
+    mobile_number?: string;
+  }): Promise<any[]> {
+    const res = await api.get('/patients/search', { params });
+    return res.data;
+  },
+
+  async getPatient(patientIdentifier: string): Promise<any> {
+    const res = await api.get(`/patients/${patientIdentifier}`);
+    return res.data;
+  },
+
+  async getPatientPrescriptions(patientIdentifier: string): Promise<any[]> {
+    const res = await api.get(`/patients/${patientIdentifier}/prescriptions`);
+    return res.data;
+  },
+
+  async getPatientAuditTrail(patientIdentifier: string): Promise<any[]> {
+    const res = await api.get(`/patients/${patientIdentifier}/audit`);
+    return res.data;
+  },
 };

@@ -108,6 +108,11 @@ class PrescriptionResponse(BaseModel):
     audio_url: Optional[str] = None
     validation_issues: list[dict] = Field(default_factory=list)
     clarification_questions: list[dict] = Field(default_factory=list)
+    patient_id: Optional[str] = None
+    permanent_patient_id: Optional[str] = None
+    edited_transcript: Optional[str] = None
+    pdf_path: Optional[str] = None
+    verified_at: Optional[str] = None
     created_at: str = ""
     updated_at: str = ""
     confirmed_at: Optional[str] = None

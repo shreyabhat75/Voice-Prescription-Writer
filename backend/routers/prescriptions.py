@@ -37,6 +37,15 @@ async def list_prescriptions() -> list[dict[str, Any]]:
 
 
 @router.get(
+    "/medicines/search",
+    summary="Fast prefix and fuzzy search for medicine names",
+)
+def search_medicine_catalog(q: str = "", limit: int = 10) -> list[dict[str, Any]]:
+    from backend.services.medicines.alias_matcher import search_medicines
+    return search_medicines(q, limit=limit)
+
+
+@router.get(
     "/{prescription_id}",
     response_model=PrescriptionResponse,
     summary="Get details of a prescription",
