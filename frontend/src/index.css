@@ -1,8 +1,308 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,400;0,14..32,500;0,14..32,600;0,14..32,700;1,14..32,400&display=swap');
 @import "tailwindcss";
 
+@theme {
+  --font-family-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+
+  /* Clinical Color Palette */
+  --color-navy:          #0F172A;
+  --color-navy-800:      #1E293B;
+  --color-navy-700:      #334155;
+  --color-navy-600:      #475569;
+
+  --color-medical-blue:  #2563EB;
+  --color-medical-blue-hover: #1D4ED8;
+  --color-medical-blue-light: #EFF6FF;
+  --color-medical-blue-muted: #BFDBFE;
+
+  --color-mint:          #059669;
+  --color-mint-hover:    #047857;
+  --color-mint-light:    #ECFDF5;
+  --color-mint-muted:    #A7F3D0;
+
+  --color-amber:         #D97706;
+  --color-amber-hover:   #B45309;
+  --color-amber-light:   #FFFBEB;
+  --color-amber-muted:   #FDE68A;
+
+  --color-critical:      #DC2626;
+  --color-critical-hover:#B91C1C;
+  --color-critical-light:#FEF2F2;
+  --color-critical-muted:#FECACA;
+
+  --color-surface:       #FFFFFF;
+  --color-muted:         #F8FAFC;
+  --color-border:        #E2E8F0;
+  --color-border-subtle: #F1F5F9;
+
+  --color-text-primary:  #0F172A;
+  --color-text-secondary:#475569;
+  --color-text-muted:    #94A3B8;
+  --color-text-disabled: #CBD5E1;
+}
+
 @layer base {
+  *, *::before, *::after {
+    box-sizing: border-box;
+  }
+
+  html {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
   body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background-color: #F8FAFC;
+    color: #0F172A;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  /* Tabular numerals for clinical data */
+  .tabular-nums,
+  .font-tabular {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1;
+  }
+
+  /* Smooth scrolling */
+  :root {
+    scroll-behavior: smooth;
+  }
+
+  /* Focus ring for accessibility */
+  :focus-visible {
+    outline: 2px solid #2563EB;
+    outline-offset: 2px;
+    border-radius: 4px;
   }
 }
 
+@layer components {
+  /* Clinical card surface */
+  .clinical-card {
+    background-color: #FFFFFF;
+    border: 1px solid #E2E8F0;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.04), 0 1px 2px -1px rgb(0 0 0 / 0.04);
+  }
+
+  /* Status pill base */
+  .status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    border-radius: 9999px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+  }
+
+  /* Keyboard hint badge */
+  .kbd-hint {
+    display: inline-flex;
+    align-items: center;
+    padding: 1px 5px;
+    background: #F1F5F9;
+    border: 1px solid #CBD5E1;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 600;
+    font-family: ui-monospace, monospace;
+    color: #475569;
+    line-height: 1.4;
+  }
+
+  /* Evidence field status dot */
+  .evidence-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 9999px;
+    flex-shrink: 0;
+  }
+
+  /* Sidebar nav item */
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    color: #94A3B8;
+    transition: background-color 150ms, color 150ms;
+    cursor: pointer;
+    text-decoration: none;
+  }
+
+  .nav-item:hover {
+    background-color: rgba(255,255,255,0.08);
+    color: #FFFFFF;
+  }
+
+  .nav-item.active {
+    background-color: rgba(37,99,235,0.2);
+    color: #93C5FD;
+  }
+
+  /* Clinical table header */
+  .clinical-th {
+    padding: 8px 12px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #64748B;
+    background-color: #F8FAFC;
+    white-space: nowrap;
+  }
+
+  /* Animate in utility */
+  .animate-in {
+    animation: fadeIn 150ms ease-out forwards;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-4px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .slide-down {
+    animation: slideDown 150ms ease-out forwards;
+  }
+
+  @keyframes slideDown {
+    from { opacity: 0; transform: translateY(-8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Waveform canvas container */
+  .waveform-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #0F172A;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid #1E293B;
+  }
+
+  /* Pulse REC indicator */
+  .rec-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 9999px;
+    background-color: #DC2626;
+    animation: recPulse 1.2s ease-in-out infinite;
+  }
+
+  @keyframes recPulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50%       { opacity: 0.5; transform: scale(0.85); }
+  }
+
+  /* Autocomplete dropdown */
+  .autocomplete-dropdown {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    background: #FFFFFF;
+    border: 1px solid #E2E8F0;
+    border-radius: 8px;
+    box-shadow: 0 10px 25px -5px rgb(0 0 0 / 0.12), 0 4px 10px -6px rgb(0 0 0 / 0.08);
+    z-index: 50;
+    max-height: 200px;
+    overflow-y: auto;
+  }
+
+  .autocomplete-item {
+    padding: 8px 12px;
+    font-size: 12px;
+    cursor: pointer;
+    color: #0F172A;
+    transition: background-color 100ms;
+  }
+
+  .autocomplete-item:hover,
+  .autocomplete-item.selected {
+    background-color: #EFF6FF;
+    color: #1D4ED8;
+  }
+
+  /* Toast notification */
+  .toast {
+    position: fixed;
+    top: 20px;
+    right: 24px;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 600;
+    box-shadow: 0 10px 25px -5px rgb(0 0 0 / 0.2);
+    animation: toastIn 200ms ease-out forwards;
+  }
+
+  @keyframes toastIn {
+    from { opacity: 0; transform: translateX(20px); }
+    to   { opacity: 1; transform: translateX(0); }
+  }
+
+  /* Audit timeline */
+  .timeline-item {
+    display: flex;
+    gap: 12px;
+    padding-bottom: 16px;
+    position: relative;
+  }
+
+  .timeline-item:not(:last-child)::before {
+    content: '';
+    position: absolute;
+    left: 15px;
+    top: 32px;
+    bottom: 0;
+    width: 1px;
+    background-color: #E2E8F0;
+  }
+
+  .timeline-dot {
+    width: 32px;
+    height: 32px;
+    border-radius: 9999px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 14px;
+    border: 2px solid #E2E8F0;
+    background: #FFFFFF;
+  }
+}
+
+@layer utilities {
+  .text-clinical-xs  { font-size: 11px; line-height: 1.5; }
+  .text-clinical-sm  { font-size: 12px; line-height: 1.6; }
+  .text-clinical-base{ font-size: 14px; line-height: 1.6; }
+
+  .border-l-medical  { border-left: 3px solid #2563EB; }
+  .border-l-mint     { border-left: 3px solid #059669; }
+  .border-l-amber    { border-left: 3px solid #D97706; }
+  .border-l-critical { border-left: 3px solid #DC2626; }
+
+  .bg-navy           { background-color: #0F172A; }
+  .bg-navy-800       { background-color: #1E293B; }
+  .text-navy         { color: #0F172A; }
+
+  .ring-medical      { --tw-ring-color: #2563EB; }
+  .ring-mint         { --tw-ring-color: #059669; }
+  .ring-critical     { --tw-ring-color: #DC2626; }
+}

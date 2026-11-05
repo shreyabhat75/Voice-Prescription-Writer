@@ -8,6 +8,7 @@ export interface UseAudioRecorderReturn {
   audioUrl: string | null;
   error: string | null;
   permissionStatus: 'prompt' | 'granted' | 'denied' | 'unsupported';
+  stream: MediaStream | null;
   startRecording: () => Promise<void>;
   stopRecording: () => Promise<Blob | null>;
   pauseRecording: () => void;
@@ -23,6 +24,7 @@ export function useAudioRecorder(options?: { onChunk?: (chunk: Blob) => void }):
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [permissionStatus, setPermissionStatus] = useState<'prompt' | 'granted' | 'denied' | 'unsupported'>('prompt');
+  const [stream, setStream] = useState<MediaStream | null>(null);
 
   const onChunkRef = useRef(options?.onChunk);
   onChunkRef.current = options?.onChunk;
@@ -32,7 +34,6 @@ export function useAudioRecorder(options?: { onChunk?: (chunk: Blob) => void }):
   const chunksRef = useRef<Blob[]>([]);
   const streamRef = useRef<MediaStream | null>(null);
 
-  // Check permission query if supported
   useEffect(() => {
     if (navigator.permissions && navigator.permissions.query) {
       navigator.permissions
@@ -43,22 +44,17 @@ export function useAudioRecorder(options?: { onChunk?: (chunk: Blob) => void }):
             setPermissionStatus(permission.state as 'prompt' | 'granted' | 'denied');
           };
         })
-        .catch(() => {
-          // Ignore if permission query is restricted
-        });
+        .catch(() => {});
     }
   }, []);
 
-  // Cleanup on unmount
   useEffect(() => {
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
       if (streamRef.current) {
         streamRef.current.getTracks().forEach((track) => track.stop());
       }
-      if (audioUrl) {
-        URL.revokeObjectURL(audioUrl);
-      }
+      if (audioUrl) URL.revokeObjectURL(audioUrl);
     };
   }, [audioUrl]);
 
@@ -75,69 +71,48 @@ export function useAudioRecorder(options?: { onChunk?: (chunk: Blob) => void }):
         throw new Error('Audio recording is not supported in this browser environment.');
       }
 
-      const stream = await navigator.mediaDevices.getUserMedia({
-        audio: {
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: true,
-        },
+      const mediaStream = await navigator.mediaDevices.getUserMedia({
+        audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
       });
-      streamRef.current = stream;
+      streamRef.current = mediaStream;
+      setStream(mediaStream);
       setPermissionStatus('granted');
 
-      // Dynamically select supported audio container & codec
-      const mimeTypes = [
-        'audio/webm;codecs=opus',
-        'audio/webm',
-        'audio/ogg;codecs=opus',
-        'audio/mp4',
-        'audio/aac',
-      ];
+      const mimeTypes = ['audio/webm;codecs=opus', 'audio/webm', 'audio/ogg;codecs=opus', 'audio/mp4', 'audio/aac'];
       const supportedType = mimeTypes.find((type) => MediaRecorder.isTypeSupported(type)) || '';
 
-      const recorder = new MediaRecorder(stream, supportedType ? { mimeType: supportedType } : undefined);
+      const recorder = new MediaRecorder(mediaStream, supportedType ? { mimeType: supportedType } : undefined);
       mediaRecorderRef.current = recorder;
 
       recorder.ondataavailable = (event) => {
         if (event.data && event.data.size > 0) {
           chunksRef.current.push(event.data);
-          if (onChunkRef.current) {
-            onChunkRef.current(event.data);
-          }
+          if (onChunkRef.current) onChunkRef.current(event.data);
         }
       };
 
       recorder.onstop = () => {
         const mime = recorder.mimeType || 'audio/webm';
         const blob = new Blob(chunksRef.current, { type: mime });
-
-        // Ensure blob contains actual audio data
         if (blob.size < 100) {
           setError('Recorded audio was empty or too short. Please try dictating again.');
           setAudioBlob(null);
         } else {
           setAudioBlob(blob);
-          const url = URL.createObjectURL(blob);
-          setAudioUrl(url);
+          setAudioUrl(URL.createObjectURL(blob));
         }
-
-        // Release microphone hardware
         if (streamRef.current) {
           streamRef.current.getTracks().forEach((track) => track.stop());
           streamRef.current = null;
+          setStream(null);
         }
       };
 
-      recorder.start(200); // 200ms slice interval ensures all buffers are collected
+      recorder.start(200);
       setIsRecording(true);
       setIsPaused(false);
-
-      // Start elapsed timer
-      timerRef.current = setInterval(() => {
-        setDuration((prev) => prev + 1);
-      }, 1000);
+      timerRef.current = setInterval(() => setDuration((prev) => prev + 1), 1000);
     } catch (err: any) {
-      console.error('Error starting audio recording:', err);
       let message = 'Failed to access microphone.';
       if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
         setPermissionStatus('denied');
@@ -165,19 +140,13 @@ export function useAudioRecorder(options?: { onChunk?: (chunk: Blob) => void }):
     if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'paused') {
       mediaRecorderRef.current.resume();
       setIsPaused(false);
-      timerRef.current = setInterval(() => {
-        setDuration((prev) => prev + 1);
-      }, 1000);
+      timerRef.current = setInterval(() => setDuration((prev) => prev + 1), 1000);
     }
   }, []);
 
   const stopRecording = useCallback((): Promise<Blob | null> => {
     return new Promise((resolve) => {
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-        timerRef.current = null;
-      }
-
+      if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
       const recorder = mediaRecorderRef.current;
       if (!recorder || recorder.state === 'inactive') {
         setIsRecording(false);
@@ -185,24 +154,13 @@ export function useAudioRecorder(options?: { onChunk?: (chunk: Blob) => void }):
         resolve(audioBlob);
         return;
       }
-
-      recorder.addEventListener(
-        'stop',
-        () => {
-          setIsRecording(false);
-          setIsPaused(false);
-          const mime = recorder.mimeType || 'audio/webm';
-          const blob = new Blob(chunksRef.current, { type: mime });
-          if (blob.size < 100) {
-            setError('Recording was too short or empty.');
-            resolve(null);
-          } else {
-            resolve(blob);
-          }
-        },
-        { once: true }
-      );
-
+      recorder.addEventListener('stop', () => {
+        setIsRecording(false);
+        setIsPaused(false);
+        const mime = recorder.mimeType || 'audio/webm';
+        const blob = new Blob(chunksRef.current, { type: mime });
+        resolve(blob.size < 100 ? null : blob);
+      }, { once: true });
       recorder.stop();
     });
   }, [audioBlob]);
@@ -212,6 +170,7 @@ export function useAudioRecorder(options?: { onChunk?: (chunk: Blob) => void }):
     if (streamRef.current) {
       streamRef.current.getTracks().forEach((track) => track.stop());
       streamRef.current = null;
+      setStream(null);
     }
     if (audioUrl) URL.revokeObjectURL(audioUrl);
     setAudioBlob(null);
@@ -222,18 +181,5 @@ export function useAudioRecorder(options?: { onChunk?: (chunk: Blob) => void }):
     setError(null);
   }, [audioUrl]);
 
-  return {
-    isRecording,
-    isPaused,
-    duration,
-    audioBlob,
-    audioUrl,
-    error,
-    permissionStatus,
-    startRecording,
-    stopRecording,
-    pauseRecording,
-    resumeRecording,
-    resetRecording,
-  };
+  return { isRecording, isPaused, duration, audioBlob, audioUrl, error, permissionStatus, stream, startRecording, stopRecording, pauseRecording, resumeRecording, resetRecording };
 }
