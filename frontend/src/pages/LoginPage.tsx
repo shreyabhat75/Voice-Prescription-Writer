@@ -20,10 +20,6 @@ export const LoginPage: React.FC = () => {
     setView('station');
   };
 
-  const handleToggleAdminPortal = () => {
-    setView((prev) => (prev === 'admin' ? 'portal' : 'admin'));
-  };
-
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col font-sans selection:bg-blue-600 selection:text-white">
       {/* Top Navigation */}
@@ -46,17 +42,6 @@ export const LoginPage: React.FC = () => {
           </button>
 
           <div className="flex items-center gap-3">
-            {view === 'portal' && (
-              <button
-                type="button"
-                onClick={handleToggleAdminPortal}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-700 hover:text-slate-900 hover:bg-slate-100 border border-slate-200 shadow-xs transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
-              >
-                <ShieldCheck className="w-4 h-4 text-slate-600" />
-                <span>Admin Access</span>
-              </button>
-            )}
-
             {view !== 'portal' && (
               <button
                 type="button"
