@@ -1,0 +1,10 @@
+# Optional HTTPS reverse proxy in front of docker-compose.prod.yml.
+# Point DNS at this machine, then:
+#   caddy run --config deploy/Caddyfile
+#
+# Set SITE_ADDRESS to the public hostname, for example:
+#   SITE_ADDRESS=rx.hospital.example caddy run --config deploy/Caddyfile
+
+{$SITE_ADDRESS:localhost} {
+	reverse_proxy 127.0.0.1:80
+}
