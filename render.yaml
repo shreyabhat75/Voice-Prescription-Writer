@@ -1,0 +1,34 @@
+services:
+  - type: web
+    name: voice-rx-backend
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile.backend
+    healthCheckPath: /health
+    envVars:
+      - key: STT_PROVIDER
+        value: mock
+      - key: LLM_PROVIDER
+        value: mock
+      - key: PYTHONPATH
+        value: /app
+      - key: APP_ENV
+        value: production
+
+  - type: web
+    name: voice-rx-frontend
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile.frontend
+    healthCheckPath: /health
+    envVars:
+      - key: BACKEND_UPSTREAM
+        fromService:
+          name: voice-rx-backend
+          type: web
+          envVarKey: RENDER_EXTERNAL_URL
+      - key: BACKEND_HOST_HEADER
+        fromService:
+          name: voice-rx-backend
+          type: web
+          envVarKey: RENDER_EXTERNAL_HOSTNAME

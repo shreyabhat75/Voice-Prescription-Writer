@@ -123,6 +123,14 @@ Prod compose uses SQLite inside the `voice_rx_db` volume. That is intentional: a
 
 The backend can use Postgres if `DATABASE_URL` starts with `postgresql://` and `asyncpg` is installed. The compose file does not switch to that automatically, because the default image is set up for SQLite. Leave it unless someone has actually provisioned Postgres.
 
+## Render (optional public demo)
+
+Render does not run `docker-compose.yml` as one stack. It builds the same Dockerfiles as two free web services (`render.yaml`): backend from `Dockerfile.backend`, frontend from `Dockerfile.frontend`.
+
+Local compose is unchanged. On Render, the frontend container reads `PORT` and `BACKEND_UPSTREAM` and points nginx at the public backend URL. Free web services cannot talk over Render’s private network, which is why that public URL is used.
+
+The site will sleep after about 15 minutes with no traffic. A ping to the frontend `/health` (and the backend `/health` if you want both warm) can wake it. SQLite files on Render free are not durable; a sleep or redeploy can wipe saved prescriptions.
+
 ## Quick check that it worked
 
 ```bash

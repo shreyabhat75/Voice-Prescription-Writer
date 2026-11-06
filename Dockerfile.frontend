@@ -11,9 +11,16 @@ RUN npx vite build
 
 FROM nginx:1.27-alpine
 
-RUN rm -f /etc/nginx/conf.d/default.conf
+RUN apk add --no-cache gettext curl \
+    && rm -f /etc/nginx/conf.d/default.conf
 
 COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY deploy/nginx.render.conf.template /etc/nginx/templates/default.conf.template
+COPY deploy/frontend-entrypoint.sh /frontend-entrypoint.sh
 COPY --from=builder /app/dist /usr/share/nginx/html
 
+RUN chmod +x /frontend-entrypoint.sh
+
 EXPOSE 80
+
+ENTRYPOINT ["/frontend-entrypoint.sh"]
