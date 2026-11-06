@@ -1,196 +1,134 @@
-import React, { useState } from 'react';
-import { Check, AlertTriangle, XCircle, Edit3, Info, CheckCheck } from 'lucide-react';
-import { FieldStatus, SourceEvidence } from '../../types';
+import React, { useState, useRef } from 'react';
+import { SourceEvidence, FieldStatus } from '../../types';
+import { Check, X } from 'lucide-react';
+
+const STATUS_DOT: Record<FieldStatus, string> = {
+  extracted:       'bg-emerald-500',
+  doctor_corrected:'bg-blue-500',
+  unclear:         'bg-amber-500',
+  needs_review:    'bg-amber-400',
+  not_mentioned:   'bg-slate-300',
+};
+
+interface Option { label: string; value: string; }
 
 interface EvidenceFieldProps {
-  label?: string;
   evidence: SourceEvidence;
-  onChange: (newEvidence: SourceEvidence) => void;
-  type?: 'text' | 'number' | 'select';
-  options?: Array<{ label: string; value: string }>;
+  onChange: (updated: SourceEvidence) => void;
   placeholder?: string;
-  className?: string;
   isEditMode?: boolean;
-  onSelectPhrase?: (sourceText: string) => void;
+  type?: 'text' | 'select';
+  options?: Option[];
+  onSelectPhrase?: (phrase: string) => void;
+  className?: string;
+  inputRef?: React.RefObject<HTMLInputElement | null>;
 }
 
 export const EvidenceField: React.FC<EvidenceFieldProps> = ({
-  label,
   evidence,
   onChange,
-  type = 'text',
-  options,
-  placeholder = 'Not mentioned',
-  className = '',
+  placeholder = '—',
   isEditMode = false,
+  type = 'text',
+  options = [],
   onSelectPhrase,
+  className = '',
+  inputRef: externalInputRef,
 }) => {
-  const [isInlineEditing, setIsInlineEditing] = useState(false);
-  const [draftValue, setDraftValue] = useState(evidence.value ?? '');
+  const [localVal, setLocalVal] = useState(String(evidence.value ?? ''));
+  const [editing, setEditing] = useState(false);
+  const internalRef = useRef<HTMLInputElement>(null);
 
-  const statusIcons: Record<FieldStatus, { icon: any; color: string; badge: string }> = {
-    extracted: {
-      icon: Check,
-      color: 'text-emerald-600',
-      badge: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-    },
-    doctor_corrected: {
-      icon: Edit3,
-      color: 'text-blue-600',
-      badge: 'bg-blue-50 text-blue-700 border-blue-200',
-    },
-    needs_review: {
-      icon: AlertTriangle,
-      color: 'text-amber-500',
-      badge: 'bg-amber-50 text-amber-700 border-amber-200',
-    },
-    unclear: {
-      icon: AlertTriangle,
-      color: 'text-amber-500',
-      badge: 'bg-amber-50 text-amber-700 border-amber-200',
-    },
-    not_mentioned: {
-      icon: XCircle,
-      color: 'text-slate-400',
-      badge: 'bg-slate-50 text-slate-500 border-slate-200',
-    },
+  const startEdit = () => {
+    setLocalVal(String(evidence.value ?? ''));
+    setEditing(true);
+    setTimeout(() => {
+      (externalInputRef?.current ?? internalRef.current)?.focus();
+    }, 0);
   };
 
-  const statusConfig = statusIcons[evidence.status] || statusIcons.not_mentioned;
-  const StatusIcon = statusConfig.icon;
-
-  const handleSave = (valToSave?: any) => {
-    setIsInlineEditing(false);
-    const value = valToSave !== undefined ? valToSave : draftValue;
-    if (value !== evidence.value) {
-      onChange({
-        ...evidence,
-        value: value === '' ? null : value,
-        status: 'doctor_corrected',
-        confidence: 1.0,
-      });
-    }
+  const commit = () => {
+    setEditing(false);
+    onChange({ ...evidence, value: localVal, status: 'doctor_corrected', confidence: 1.0 });
   };
 
-  // If in global edit mode or local inline editing
-  const isEditing = isEditMode || isInlineEditing;
+  const cancel = () => {
+    setEditing(false);
+    setLocalVal(String(evidence.value ?? ''));
+  };
 
-  return (
-    <div className={`flex flex-col gap-1 ${className}`}>
-      {label && (
-        <div className="flex items-center justify-between">
-          <label className="text-xs font-semibold text-slate-700">{label}</label>
-          <div className="flex items-center gap-1">
-            <span
-              className={`inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded border ${statusConfig.badge}`}
-              title={evidence.source_text ? `Source phrase: "${evidence.source_text}"` : 'Status'}
-            >
-              <StatusIcon className="w-3 h-3" />
-              <span className="capitalize">{evidence.status.replace('_', ' ')}</span>
-            </span>
-          </div>
-        </div>
-      )}
+  const displayVal = evidence.value != null && evidence.value !== '' ? String(evidence.value) : null;
+  const dot = STATUS_DOT[evidence.status] ?? STATUS_DOT.not_mentioned;
 
-      {isEditing ? (
-        <div className="flex items-center gap-1.5">
-          {type === 'select' && options ? (
-            <select
-              value={draftValue}
-              onChange={(e) => {
-                setDraftValue(e.target.value);
-                if (isEditMode) handleSave(e.target.value);
-              }}
-              onBlur={() => handleSave()}
-              className="w-full px-2.5 py-1.5 text-xs bg-white border border-blue-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium text-slate-800"
-            >
-              <option value="">-- Select --</option>
-              {options.map((opt) => (
-                <option key={opt.value} value={opt.value}>
-                  {opt.label}
-                </option>
-              ))}
-            </select>
-          ) : (
-            <input
-              type={type}
-              value={draftValue}
-              onChange={(e) => setDraftValue(e.target.value)}
-              onBlur={() => handleSave()}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') handleSave();
-                if (e.key === 'Escape') {
-                  setDraftValue(evidence.value ?? '');
-                  setIsInlineEditing(false);
-                }
-              }}
-              placeholder={placeholder}
-              className="w-full px-2.5 py-1.5 text-xs bg-white border border-blue-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium text-slate-800"
-              autoFocus={isInlineEditing}
-            />
-          )}
-          {isInlineEditing && (
-            <button
-              type="button"
-              onClick={() => handleSave()}
-              className="p-1 bg-blue-600 text-white rounded hover:bg-blue-700 cursor-pointer"
-              title="Apply"
-            >
-              <CheckCheck className="w-3.5 h-3.5" />
-            </button>
-          )}
-        </div>
-      ) : (
-        <div
-          onClick={() => {
-            setDraftValue(evidence.value ?? '');
-            setIsInlineEditing(true);
-          }}
-          className={`group flex items-center justify-between px-2.5 py-1.5 text-xs rounded-lg border transition-all cursor-pointer ${
-            evidence.status === 'not_mentioned'
-              ? 'border-dashed border-slate-300 bg-slate-50/50 hover:bg-slate-100'
-              : evidence.status === 'doctor_corrected'
-              ? 'border-blue-200 bg-blue-50/30 hover:bg-blue-50'
-              : evidence.status === 'needs_review'
-              ? 'border-amber-300 bg-amber-50/40 hover:bg-amber-50'
-              : 'border-slate-200 bg-white hover:border-blue-300'
-          }`}
-          title="Click to edit field directly"
-        >
+  // READ MODE
+  if (!isEditMode && !editing) {
+    return (
+      <div
+        className={`flex items-center gap-1.5 group cursor-pointer min-h-[22px] ${className}`}
+        onClick={startEdit}
+        title={evidence.source_text ? `Source: "${evidence.source_text}"` : 'Click to edit'}
+      >
+        <span className={`evidence-dot flex-shrink-0 ${dot}`} />
+        {displayVal ? (
           <span
-            className={
-              evidence.value
-                ? 'text-slate-900 font-medium'
-                : 'text-slate-400 italic text-[11px]'
-            }
+            className="text-xs text-slate-800 font-medium hover:text-blue-600 transition-colors"
+            onClick={(e) => {
+              e.stopPropagation();
+              if (evidence.source_text && onSelectPhrase) onSelectPhrase(evidence.source_text);
+            }}
           >
-            {evidence.value ? String(evidence.value) : placeholder}
+            {displayVal}
           </span>
+        ) : (
+          <span className="text-[11px] text-slate-400 italic">{placeholder}</span>
+        )}
+      </div>
+    );
+  }
 
-          <div className="flex items-center gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
-            {evidence.source_text && onSelectPhrase && (
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onSelectPhrase(evidence.source_text!);
-                }}
-                className="text-slate-400 hover:text-blue-600 p-0.5 rounded cursor-pointer"
-                title={`Spoken source text: "${evidence.source_text}"`}
-              >
-                <Info className="w-3.5 h-3.5" />
-              </button>
-            )}
-            <Edit3 className="w-3 h-3 text-slate-400 group-hover:text-blue-600" />
-          </div>
-        </div>
-      )}
+  // EDIT MODE — select
+  if (type === 'select') {
+    return (
+      <div className={`flex items-center gap-1 ${className}`}>
+        <span className={`evidence-dot flex-shrink-0 ${dot}`} />
+        <select
+          value={String(evidence.value ?? '')}
+          onChange={(e) => onChange({ ...evidence, value: e.target.value, status: 'doctor_corrected', confidence: 1.0 })}
+          className="text-xs text-slate-800 bg-white border border-blue-400 rounded px-1.5 py-1 focus:outline-none focus:ring-2 focus:ring-blue-400 w-full"
+          autoFocus
+        >
+          <option value="">{placeholder}</option>
+          {options.map((o) => (
+            <option key={o.value} value={o.value}>{o.label}</option>
+          ))}
+        </select>
+      </div>
+    );
+  }
 
-      {evidence.source_text && !isEditing && (
-        <span className="text-[10px] text-slate-400 truncate px-0.5">
-          Dictated: &ldquo;{evidence.source_text}&rdquo;
-        </span>
-      )}
+  // EDIT MODE — text
+  return (
+    <div className={`flex items-center gap-1 ${className}`}>
+      <span className={`evidence-dot flex-shrink-0 ${dot}`} />
+      <input
+        ref={externalInputRef as React.RefObject<HTMLInputElement> ?? internalRef}
+        type="text"
+        value={localVal}
+        onChange={(e) => setLocalVal(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') { e.preventDefault(); commit(); }
+          if (e.key === 'Escape') cancel();
+        }}
+        className="text-xs text-slate-800 bg-white border border-blue-400 rounded px-1.5 py-1 focus:outline-none focus:ring-2 focus:ring-blue-400 w-full"
+        placeholder={placeholder}
+        autoFocus={!externalInputRef}
+      />
+      <button type="button" onClick={commit} className="p-0.5 text-emerald-600 hover:text-emerald-700 cursor-pointer flex-shrink-0">
+        <Check className="w-3.5 h-3.5" />
+      </button>
+      <button type="button" onClick={cancel} className="p-0.5 text-slate-400 hover:text-red-500 cursor-pointer flex-shrink-0">
+        <X className="w-3.5 h-3.5" />
+      </button>
     </div>
   );
 };

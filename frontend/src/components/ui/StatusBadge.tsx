@@ -1,53 +1,71 @@
 import React from 'react';
 import { PrescriptionStatus } from '../../types';
 
+const STATUS_CONFIG: Record<PrescriptionStatus, {
+  label: string;
+  bg: string;
+  text: string;
+  border: string;
+  dot?: string;
+  pulse?: boolean;
+}> = {
+  recording: {
+    label: 'Recording',
+    bg: 'bg-red-50',
+    text: 'text-red-700',
+    border: 'border-red-200',
+    dot: 'bg-red-500',
+    pulse: true,
+  },
+  transcribing: {
+    label: 'Transcribing',
+    bg: 'bg-amber-50',
+    text: 'text-amber-700',
+    border: 'border-amber-200',
+    dot: 'bg-amber-500',
+    pulse: true,
+  },
+  structuring: {
+    label: 'AI Structuring',
+    bg: 'bg-blue-50',
+    text: 'text-blue-700',
+    border: 'border-blue-200',
+    dot: 'bg-blue-500',
+    pulse: true,
+  },
+  review: {
+    label: 'Needs Review',
+    bg: 'bg-amber-50',
+    text: 'text-amber-800',
+    border: 'border-amber-300',
+    dot: 'bg-amber-400',
+  },
+  confirmed: {
+    label: 'Confirmed',
+    bg: 'bg-emerald-50',
+    text: 'text-emerald-800',
+    border: 'border-emerald-200',
+    dot: 'bg-emerald-500',
+  },
+};
+
 interface StatusBadgeProps {
   status: PrescriptionStatus;
+  size?: 'sm' | 'md';
 }
 
-export const StatusBadge: React.FC<StatusBadgeProps> = ({ status }) => {
-  const configs: Record<PrescriptionStatus, { label: string; bg: string; text: string; dot: string }> = {
-    recording: {
-      label: 'Recording',
-      bg: 'bg-rose-50 border-rose-200',
-      text: 'text-rose-700',
-      dot: 'bg-rose-500 animate-pulse',
-    },
-    transcribing: {
-      label: 'Transcribing',
-      bg: 'bg-amber-50 border-amber-200',
-      text: 'text-amber-700',
-      dot: 'bg-amber-500 animate-ping',
-    },
-    structuring: {
-      label: 'Structuring AI',
-      bg: 'bg-indigo-50 border-indigo-200',
-      text: 'text-indigo-700',
-      dot: 'bg-indigo-500 animate-pulse',
-    },
-    review: {
-      label: 'Ready for Review',
-      bg: 'bg-blue-50 border-blue-200',
-      text: 'text-blue-700',
-      dot: 'bg-blue-500',
-    },
-    confirmed: {
-      label: 'Doctor Confirmed',
-      bg: 'bg-emerald-50 border-emerald-200',
-      text: 'text-emerald-700',
-      dot: 'bg-emerald-500',
-    },
-  };
-
-  const config = configs[status] || configs.review;
+export const StatusBadge: React.FC<StatusBadgeProps> = ({ status, size = 'sm' }) => {
+  const cfg = STATUS_CONFIG[status] ?? STATUS_CONFIG.review;
+  const textSize = size === 'md' ? 'text-xs' : 'text-[11px]';
 
   return (
     <span
-      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${config.bg} ${config.text}`}
+      className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full border font-semibold ${textSize} ${cfg.bg} ${cfg.text} ${cfg.border}`}
     >
-      <span className={`w-2 h-2 rounded-full ${config.dot}`} />
-      {config.label}
+      <span
+        className={`w-1.5 h-1.5 rounded-full ${cfg.dot} ${cfg.pulse ? 'animate-pulse' : ''}`}
+      />
+      {cfg.label}
     </span>
   );
 };
-
