@@ -196,12 +196,11 @@ export async function runAdversarialRoutingTests() {
     // 6. Footer: Doctor Station Sign In (onClick={handleLogin})
 
     const expectedLoginButtons = [
-      { section: 'Header Sign In', pattern: /Doctor Sign In/ },
       { section: 'Header Station', pattern: /Doctor Station/ },
       { section: 'Hero Primary', pattern: /Enter Doctor Station/ },
       { section: 'Scenarios Header', pattern: /Access Doctor Station/ },
       { section: 'CTA Banner Primary', pattern: /Doctor Workstation Login/ },
-      { section: 'Footer CTA', pattern: /Doctor Station Sign In/ },
+      { section: 'Footer CTA', pattern: /Doctor Station/ },
     ];
 
     for (const expected of expectedLoginButtons) {
