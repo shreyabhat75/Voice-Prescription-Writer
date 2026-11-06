@@ -103,10 +103,10 @@ export const Sidebar: React.FC = () => {
         {collapsed ? (
           <div
             className="w-8 h-8 rounded-full bg-blue-800 text-blue-200 font-bold text-[10px] flex items-center justify-center cursor-pointer"
-            title={`${doctor.name} (${doctor.department})`}
+            title={`${doctor?.name || 'Physician'} (${doctor?.department || 'OPD'})`}
             onClick={() => navigate('/login')}
           >
-            {doctor.avatarInitials || 'DR'}
+            {doctor?.avatarInitials || 'DR'}
           </div>
         ) : (
           <div
@@ -115,11 +115,11 @@ export const Sidebar: React.FC = () => {
             title="Click to switch physician station"
           >
             <div className="w-7 h-7 rounded-full bg-blue-800 text-blue-200 font-bold text-[10px] flex items-center justify-center flex-shrink-0">
-              {doctor.avatarInitials || 'DR'}
+              {doctor?.avatarInitials || 'DR'}
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-xs font-semibold text-slate-200 truncate">{doctor.name.split(',')[0]}</p>
-              <p className="text-[10px] text-slate-400 truncate">{doctor.department}</p>
+              <p className="text-xs font-semibold text-slate-200 truncate">{doctor?.name ? doctor.name.split(',')[0] : 'Physician'}</p>
+              <p className="text-[10px] text-slate-400 truncate">{doctor?.department || 'Outpatient Clinic'}</p>
             </div>
           </div>
         )}

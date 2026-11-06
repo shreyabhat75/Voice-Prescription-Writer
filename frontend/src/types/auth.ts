@@ -6,6 +6,9 @@ export interface DoctorProfile {
   registrationNumber: string;
   hospital: string;
   avatarInitials: string;
+  secretCode: string;
+  loginCount: number;
+  patientsAttendedCount: number;
 }
 
 export const DEMO_DOCTORS: DoctorProfile[] = [
@@ -17,6 +20,9 @@ export const DEMO_DOCTORS: DoctorProfile[] = [
     registrationNumber: 'KMC-2018-84920',
     hospital: 'Apex Specialty Hospital & Research Institute',
     avatarInitials: 'AR',
+    secretCode: 'DOC-101',
+    loginCount: 0,
+    patientsAttendedCount: 0,
   },
   {
     id: 'doc_2',
@@ -26,6 +32,9 @@ export const DEMO_DOCTORS: DoctorProfile[] = [
     registrationNumber: 'DMC-2014-51203',
     hospital: 'Metro Heart Institute & Healthcare',
     avatarInitials: 'RS',
+    secretCode: 'DOC-202',
+    loginCount: 0,
+    patientsAttendedCount: 0,
   },
   {
     id: 'doc_3',
@@ -35,5 +44,8 @@ export const DEMO_DOCTORS: DoctorProfile[] = [
     registrationNumber: 'MMC-2019-33819',
     hospital: 'Rainbow Children & Family Clinic',
     avatarInitials: 'MI',
+    secretCode: 'DOC-303',
+    loginCount: 0,
+    patientsAttendedCount: 0,
   },
 ];

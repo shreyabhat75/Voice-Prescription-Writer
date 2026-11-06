@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { Outlet, useNavigate } from 'react-router-dom';
+import { Outlet, useNavigate, Navigate } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import {
   Bell,
@@ -15,7 +15,7 @@ import { useAuth } from '../../context/AuthContext';
 
 export const AppLayout: React.FC = () => {
   const navigate = useNavigate();
-  const { doctor, logout } = useAuth();
+  const { doctor, isAuthenticated, logout } = useAuth();
 
   const [systemStatus, setSystemStatus] = useState<'checking' | 'online' | 'offline'>('checking');
   const [sttProvider, setSttProvider] = useState<string>('');
@@ -47,6 +47,11 @@ export const AppLayout: React.FC = () => {
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, []);
+
+  // Route protection: redirect unauthenticated visitors to /login
+  if (!isAuthenticated || !doctor) {
+    return <Navigate to="/login" replace />;
+  }
 
   const handleLogout = () => {
     logout();

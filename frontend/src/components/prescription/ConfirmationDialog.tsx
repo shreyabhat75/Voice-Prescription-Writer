@@ -5,7 +5,7 @@ import { useAuth } from '../../context/AuthContext';
 
 interface ConfirmationDialogProps {
   isOpen: boolean;
-  onClose: () => void;
+  onDismiss: () => void;
   onConfirm: (doctorName: string) => Promise<void>;
   patientName?: string;
   medicineCount: number;
@@ -15,21 +15,21 @@ interface ConfirmationDialogProps {
 const DOCTOR_STORAGE_KEY = 'voicerx_last_doctor';
 
 export const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
-  isOpen, onClose, onConfirm, patientName, medicineCount, validationIssues = [],
+  isOpen, onDismiss, onConfirm, patientName, medicineCount, validationIssues = [],
 }) => {
-  const { doctor } = useAuth();
+  const { doctor, recordPatientAttended } = useAuth();
   const [doctorName, setDoctorName] = useState(() =>
-    doctor.name || localStorage.getItem(DOCTOR_STORAGE_KEY) || 'Dr. Ananya Rao, MD'
+    doctor?.name || localStorage.getItem(DOCTOR_STORAGE_KEY) || 'Dr. Ananya Rao, MD'
   );
   const [isChecked, setIsChecked] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const confirmedAt = new Date().toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'medium' });
 
   useEffect(() => {
-    if (doctor.name) {
+    if (doctor?.name) {
       setDoctorName(doctor.name);
     }
-  }, [doctor.name]);
+  }, [doctor?.name]);
 
   const blockingErrors = validationIssues.filter((i) => i.severity === 'error');
   const canConfirm = isChecked && doctorName.trim().length > 0 && blockingErrors.length === 0 && !isSubmitting;
@@ -42,7 +42,8 @@ export const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
     try {
       localStorage.setItem(DOCTOR_STORAGE_KEY, doctorName.trim());
       await onConfirm(doctorName.trim());
-      onClose();
+      recordPatientAttended(doctor?.id);
+      onDismiss();
     } finally {
       setIsSubmitting(false);
     }
@@ -57,7 +58,7 @@ export const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
             <ShieldCheck className="w-5 h-5 text-emerald-600" />
             <h3 className="font-bold text-base">Doctor Prescription Confirmation</h3>
           </div>
-          <button type="button" onClick={onClose} className="text-slate-400 hover:text-slate-600 p-1 rounded-md cursor-pointer">
+          <button type="button" onClick={onDismiss} className="text-slate-400 hover:text-slate-600 p-1 rounded-md cursor-pointer">
             <X className="w-4 h-4" />
           </button>
         </div>
@@ -96,7 +97,7 @@ export const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
               placeholder="Full name & credentials"
               className="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-400"
             />
-            {doctor.registrationNumber && (
+            {doctor?.registrationNumber && (
               <p className="text-[10px] text-slate-400 font-mono">
                 Reg: {doctor.registrationNumber} &bull; {doctor.department}
               </p>
@@ -128,7 +129,7 @@ export const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
         <div className="flex items-center justify-end gap-2 px-6 py-4 border-t border-slate-100 bg-slate-50 rounded-b-2xl">
           <button
             type="button"
-            onClick={onClose}
+            onClick={onDismiss}
             className="px-4 py-2 text-xs font-medium text-slate-600 hover:bg-slate-200 rounded-lg transition-colors cursor-pointer"
           >
             Cancel

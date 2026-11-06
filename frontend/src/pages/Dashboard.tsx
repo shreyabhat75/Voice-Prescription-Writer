@@ -55,10 +55,10 @@ export const Dashboard: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">
-            Welcome, {doctor.name.split(',')[0]}
+            Welcome, {doctor?.name ? doctor.name.split(',')[0] : 'Doctor'}
           </h1>
           <p className="text-xs text-slate-500 mt-0.5">
-            {doctor.department} &bull; {doctor.hospital} &bull; {new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+            {doctor?.department || 'Outpatient Department'} &bull; {doctor?.hospital || 'Hospital Workstation'} &bull; {new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
           </p>
         </div>
         <button

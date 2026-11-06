@@ -300,7 +300,7 @@ export const PrescriptionReview: React.FC = () => {
       {/* Confirmation modal */}
       <ConfirmationDialog
         isOpen={isConfirmOpen}
-        onClose={() => setIsConfirmOpen(false)}
+        onDismiss={() => setIsConfirmOpen(false)}
         onConfirm={handleConfirm}
         patientName={prescription.patient.name.value}
         medicineCount={prescription.medicines.length}
