@@ -8,9 +8,11 @@ import { apiClient } from '../api/client';
 import { PrescriptionListItem } from '../types';
 import { StatusBadge } from '../components/ui/StatusBadge';
 import { LoadingSpinner } from '../components/ui/LoadingSpinner';
+import { useAuth } from '../context/AuthContext';
 
 export const Dashboard: React.FC = () => {
   const navigate = useNavigate();
+  const { doctor } = useAuth();
   const [prescriptions, setPrescriptions] = useState<PrescriptionListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [health, setHealth] = useState<{ stt_provider: string; llm_provider: string } | null>(null);
@@ -50,17 +52,19 @@ export const Dashboard: React.FC = () => {
   return (
     <div className="max-w-6xl mx-auto space-y-6">
       {/* Page heading */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Clinical Dashboard</h1>
-          <p className="text-sm text-slate-500 mt-0.5">
-            {new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+          <h1 className="text-2xl font-bold text-slate-900">
+            Welcome, {doctor.name.split(',')[0]}
+          </h1>
+          <p className="text-xs text-slate-500 mt-0.5">
+            {doctor.department} &bull; {doctor.hospital} &bull; {new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
           </p>
         </div>
         <button
           type="button"
           onClick={() => navigate('/new')}
-          className="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-semibold shadow-sm transition-all cursor-pointer hover:scale-105 active:scale-95"
+          className="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-semibold shadow-sm transition-all cursor-pointer hover:scale-105 active:scale-95 self-start sm:self-auto"
         >
           <Plus className="w-4 h-4" />
           New Prescription
@@ -110,7 +114,7 @@ export const Dashboard: React.FC = () => {
           </div>
           <h3 className="text-base font-bold text-slate-800 group-hover:text-blue-700">Start New Dictation</h3>
           <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-            Record a prescription and let AI structure it automatically.
+            Record a consultation and let AI structure clinical entities automatically.
           </p>
           <div className="mt-4 flex items-center gap-1 text-xs font-semibold text-blue-600">
             Begin dictation <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />

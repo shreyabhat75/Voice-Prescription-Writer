@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ShieldCheck, X, Clock, AlertTriangle, CheckCircle } from 'lucide-react';
 import { ValidationIssue } from '../../types';
+import { useAuth } from '../../context/AuthContext';
 
 interface ConfirmationDialogProps {
   isOpen: boolean;
@@ -16,12 +17,19 @@ const DOCTOR_STORAGE_KEY = 'voicerx_last_doctor';
 export const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
   isOpen, onClose, onConfirm, patientName, medicineCount, validationIssues = [],
 }) => {
+  const { doctor } = useAuth();
   const [doctorName, setDoctorName] = useState(() =>
-    localStorage.getItem(DOCTOR_STORAGE_KEY) || 'Dr. Ananya Rao, MD'
+    doctor.name || localStorage.getItem(DOCTOR_STORAGE_KEY) || 'Dr. Ananya Rao, MD'
   );
   const [isChecked, setIsChecked] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const confirmedAt = new Date().toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'medium' });
+
+  useEffect(() => {
+    if (doctor.name) {
+      setDoctorName(doctor.name);
+    }
+  }, [doctor.name]);
 
   const blockingErrors = validationIssues.filter((i) => i.severity === 'error');
   const canConfirm = isChecked && doctorName.trim().length > 0 && blockingErrors.length === 0 && !isSubmitting;
@@ -88,6 +96,11 @@ export const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
               placeholder="Full name & credentials"
               className="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-400"
             />
+            {doctor.registrationNumber && (
+              <p className="text-[10px] text-slate-400 font-mono">
+                Reg: {doctor.registrationNumber} &bull; {doctor.department}
+              </p>
+            )}
           </div>
 
           {/* Immutable timestamp */}
