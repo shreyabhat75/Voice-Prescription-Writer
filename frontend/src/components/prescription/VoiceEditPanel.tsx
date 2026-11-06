@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Mic, Send, Command } from 'lucide-react';
+import { Send, Command } from 'lucide-react';
 
 const EXAMPLE_COMMANDS = [
   'Change Dolo to 500mg',

@@ -80,7 +80,7 @@ export const NewPrescription: React.FC = () => {
     if (wsRef.current?.readyState === WebSocket.OPEN) wsRef.current.send(chunk);
   };
 
-  const { isRecording, isPaused, duration, audioBlob, audioUrl, error: micError,
+  const { isRecording, isPaused, duration, audioUrl, error: micError,
     stream, permissionStatus, startRecording, stopRecording, pauseRecording, resumeRecording, resetRecording,
   } = useAudioRecorder({ onChunk: handleAudioChunk });
 
@@ -116,7 +116,9 @@ export const NewPrescription: React.FC = () => {
           } else if (data.type === 'error') {
             setError(data.message || 'Streaming error.');
           }
-        } catch {}
+        } catch (err) {
+          console.debug('WebSocket parse error:', err);
+        }
       };
 
       ws.onerror = () => {};
@@ -155,7 +157,7 @@ export const NewPrescription: React.FC = () => {
   };
 
   const handleCancel = () => {
-    try { wsRef.current?.close(); } catch {}
+    try { wsRef.current?.close(); } catch (err) { console.debug(err); }
     wsRef.current = null;
     resetRecording();
     setFinalizedText('');

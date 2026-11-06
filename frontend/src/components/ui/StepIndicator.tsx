@@ -24,7 +24,6 @@ export const StepIndicator: React.FC<StepIndicatorProps> = ({ currentStatus }) =
       {STEPS.map((step, idx) => {
         const isDone    = idx < currentIdx;
         const isActive  = idx === currentIdx;
-        const isPending = idx > currentIdx;
 
         return (
           <React.Fragment key={step.key}>

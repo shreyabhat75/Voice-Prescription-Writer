@@ -23,7 +23,6 @@ export const AudioVisualizer: React.FC<AudioVisualizerProps> = ({
   const analyserRef = useRef<AnalyserNode | null>(null);
   const sourceRef   = useRef<MediaStreamAudioSourceNode | null>(null);
   const rafRef      = useRef<number>(0);
-  const silenceTimerRef = useRef<number>(0);
 
   const [silenceWarning, setSilenceWarning] = useState(false);
 
@@ -31,7 +30,6 @@ export const AudioVisualizer: React.FC<AudioVisualizerProps> = ({
   useEffect(() => {
     if (!stream || !isRecording) {
       cancelAnimationFrame(rafRef.current);
-      clearTimeout(silenceTimerRef.current);
       setSilenceWarning(false);
 
       // Draw flat idle line
@@ -97,7 +95,6 @@ export const AudioVisualizer: React.FC<AudioVisualizerProps> = ({
 
       if (rms > SILENCE_THRESHOLD_RMS) {
         lastSound = Date.now();
-        clearTimeout(silenceTimerRef.current);
         setSilenceWarning(false);
       } else if (Date.now() - lastSound > SILENCE_DURATION_MS) {
         setSilenceWarning(true);
@@ -121,9 +118,11 @@ export const AudioVisualizer: React.FC<AudioVisualizerProps> = ({
 
         ctx.fillStyle = color;
         ctx.beginPath();
-        ctx.roundRect
-          ? ctx.roundRect(x, y, barW, barH, 2)
-          : ctx.rect(x, y, barW, barH);
+        if (typeof ctx.roundRect === 'function') {
+          ctx.roundRect(x, y, barW, barH, 2);
+        } else {
+          ctx.rect(x, y, barW, barH);
+        }
         ctx.fill();
       }
     };
@@ -132,7 +131,6 @@ export const AudioVisualizer: React.FC<AudioVisualizerProps> = ({
 
     return () => {
       cancelAnimationFrame(rafRef.current);
-      clearTimeout(silenceTimerRef.current);
       source.disconnect();
       audioCtx.close().catch(() => {});
     };

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Mic, FileText, CheckCircle, Clock, AlertTriangle,
+  Mic, FileText, CheckCircle, AlertTriangle,
   ArrowRight, Plus, TrendingUp, Activity,
 } from 'lucide-react';
 import { apiClient } from '../api/client';
