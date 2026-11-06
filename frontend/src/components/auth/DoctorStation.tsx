@@ -65,13 +65,13 @@ export const DoctorStation: React.FC<DoctorStationProps> = ({ onBack }) => {
       )}
 
       {/* Main Doctor Station Card */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-8">
+      <div className="bg-white rounded-xl sm:rounded-2xl border border-slate-200 shadow-sm p-6 sm:p-8">
         <div className="flex items-center gap-3 mb-6">
-          <div className="w-10 h-10 rounded-lg bg-blue-600 text-white flex items-center justify-center shadow-xs">
+          <div className="w-10 h-10 rounded-lg bg-blue-600 text-white flex items-center justify-center shadow-xs shrink-0">
             <Stethoscope className="w-5 h-5" />
           </div>
           <div>
-            <h2 className="text-lg font-bold text-slate-900 tracking-tight flex items-center gap-2">
+            <h2 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight flex items-center gap-2">
               Doctor Station
               <span className="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
                 Workstation Terminal
@@ -115,16 +115,16 @@ export const DoctorStation: React.FC<DoctorStationProps> = ({ onBack }) => {
                   if (errorMessage) setErrorMessage(null);
                 }}
                 placeholder="Enter secret code (e.g. DOC-101)"
-                className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-sm font-mono tracking-wider focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600 text-slate-900 placeholder:text-slate-400 placeholder:font-sans uppercase"
+                className="w-full px-3.5 py-3 rounded-lg border border-slate-300 text-base sm:text-sm font-mono tracking-wider focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600 text-slate-900 placeholder:text-slate-400 placeholder:font-sans uppercase"
               />
-              <KeyRound className="w-4 h-4 text-slate-400 absolute right-3.5 top-3 pointer-events-none" />
+              <KeyRound className="w-4 h-4 text-slate-400 absolute right-3.5 top-3.5 pointer-events-none" />
             </div>
           </div>
 
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full py-2.5 px-4 rounded-lg bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-semibold text-xs shadow-xs transition-colors cursor-pointer flex items-center justify-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 disabled:opacity-50"
+            className="w-full py-3 px-4 min-h-[44px] rounded-lg bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-semibold text-xs shadow-xs transition-colors cursor-pointer flex items-center justify-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 disabled:opacity-50"
           >
             <Lock className="w-4 h-4" />
             <span>Unlock Workstation</span>

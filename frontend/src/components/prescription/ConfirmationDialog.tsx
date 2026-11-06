@@ -50,20 +50,20 @@ export const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-md w-full animate-in slide-down">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-3 sm:p-4">
+      <div className="bg-white rounded-xl sm:rounded-2xl border border-slate-200 shadow-2xl max-w-md w-full max-h-[92vh] flex flex-col animate-in slide-down">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-slate-100">
+        <div className="flex items-center justify-between px-5 sm:px-6 pt-5 pb-4 border-b border-slate-100 shrink-0">
           <div className="flex items-center gap-2 text-emerald-700">
-            <ShieldCheck className="w-5 h-5 text-emerald-600" />
-            <h3 className="font-bold text-base">Doctor Prescription Confirmation</h3>
+            <ShieldCheck className="w-5 h-5 text-emerald-600 shrink-0" />
+            <h3 className="font-bold text-sm sm:text-base">Doctor Prescription Confirmation</h3>
           </div>
           <button type="button" onClick={onDismiss} className="text-slate-400 hover:text-slate-600 p-1 rounded-md cursor-pointer">
             <X className="w-4 h-4" />
           </button>
         </div>
 
-        <div className="px-6 py-4 space-y-4">
+        <div className="px-5 sm:px-6 py-4 space-y-4 overflow-y-auto">
           {/* Review checklist */}
           <div className="bg-slate-50 rounded-xl border border-slate-200 p-4 space-y-2.5">
             <p className="text-[11px] font-bold text-slate-600 uppercase tracking-wider">Review Checklist</p>
@@ -126,11 +126,11 @@ export const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
         </div>
 
         {/* Actions */}
-        <div className="flex items-center justify-end gap-2 px-6 py-4 border-t border-slate-100 bg-slate-50 rounded-b-2xl">
+        <div className="flex items-center justify-end gap-2 px-5 sm:px-6 py-4 border-t border-slate-100 bg-slate-50 rounded-b-xl sm:rounded-b-2xl shrink-0">
           <button
             type="button"
             onClick={onDismiss}
-            className="px-4 py-2 text-xs font-medium text-slate-600 hover:bg-slate-200 rounded-lg transition-colors cursor-pointer"
+            className="px-4 py-2 min-h-[40px] text-xs font-medium text-slate-600 hover:bg-slate-200 rounded-lg transition-colors cursor-pointer"
           >
             Cancel
           </button>
@@ -138,7 +138,7 @@ export const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
             type="button"
             disabled={!canConfirm}
             onClick={handleConfirm}
-            className="inline-flex items-center gap-1.5 px-5 py-2 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white rounded-lg shadow-sm transition-colors cursor-pointer"
+            className="inline-flex items-center gap-1.5 px-5 py-2 min-h-[40px] text-xs font-bold bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white rounded-lg shadow-sm transition-colors cursor-pointer"
           >
             <ShieldCheck className="w-3.5 h-3.5" />
             {isSubmitting ? 'Confirming…' : 'Confirm & Authorize'}

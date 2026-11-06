@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { Outlet, useNavigate, Navigate } from 'react-router-dom';
+import { Outlet, useNavigate, Navigate, NavLink } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import {
   Bell,
@@ -9,6 +9,9 @@ import {
   LogOut,
   ExternalLink,
   ChevronDown,
+  LayoutDashboard,
+  Mic,
+  History,
 } from 'lucide-react';
 import { apiClient } from '../../api/client';
 import { useAuth } from '../../context/AuthContext';
@@ -174,9 +177,48 @@ export const AppLayout: React.FC = () => {
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 p-6 overflow-y-auto">
+        <main className="flex-1 p-4 sm:p-6 overflow-y-auto pb-20 md:pb-6">
           <Outlet />
         </main>
+
+        {/* Mobile Bottom Navigation Bar for Clinicians */}
+        <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200 shadow-lg px-4 py-1.5 flex items-center justify-around safe-area-bottom">
+          <NavLink
+            to="/dashboard"
+            className={({ isActive }) =>
+              `flex flex-col items-center gap-1 py-1 px-3 rounded-lg text-[10px] font-semibold transition-colors ${
+                isActive ? 'text-blue-600 bg-blue-50' : 'text-slate-500 hover:text-slate-800'
+              }`
+            }
+          >
+            <LayoutDashboard className="w-4 h-4" />
+            <span>Dashboard</span>
+          </NavLink>
+
+          <NavLink
+            to="/new"
+            className={({ isActive }) =>
+              `flex flex-col items-center gap-1 py-1.5 px-4 rounded-xl text-[10px] font-bold transition-all shadow-xs ${
+                isActive ? 'bg-blue-600 text-white shadow-blue-600/30' : 'bg-blue-600/90 text-white hover:bg-blue-600'
+              }`
+            }
+          >
+            <Mic className="w-4 h-4" />
+            <span>New Rx</span>
+          </NavLink>
+
+          <NavLink
+            to="/history"
+            className={({ isActive }) =>
+              `flex flex-col items-center gap-1 py-1 px-3 rounded-lg text-[10px] font-semibold transition-colors ${
+                isActive ? 'text-blue-600 bg-blue-50' : 'text-slate-500 hover:text-slate-800'
+              }`
+            }
+          >
+            <History className="w-4 h-4" />
+            <span>History</span>
+          </NavLink>
+        </nav>
       </div>
     </div>
   );

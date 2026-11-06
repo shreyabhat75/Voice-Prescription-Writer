@@ -115,11 +115,11 @@ export const AdminBlock: React.FC<AdminBlockProps> = ({ onBack }) => {
         ) : <div />}
 
         {/* Tab Switcher */}
-        <div className="flex items-center gap-1 bg-slate-200/80 p-1 rounded-lg text-xs font-semibold">
+        <div className="flex items-center gap-1 bg-slate-200/80 p-1 rounded-lg text-xs font-semibold w-full sm:w-auto">
           <button
             type="button"
             onClick={() => setActiveTab('roster')}
-            className={`px-3.5 py-1.5 rounded-md transition-all cursor-pointer flex items-center gap-1.5 ${
+            className={`flex-1 sm:flex-initial px-3.5 py-2 sm:py-1.5 rounded-md transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
               activeTab === 'roster'
                 ? 'bg-white text-slate-900 shadow-xs'
                 : 'text-slate-600 hover:text-slate-900'
@@ -131,7 +131,7 @@ export const AdminBlock: React.FC<AdminBlockProps> = ({ onBack }) => {
           <button
             type="button"
             onClick={() => setActiveTab('analytics')}
-            className={`px-3.5 py-1.5 rounded-md transition-all cursor-pointer flex items-center gap-1.5 ${
+            className={`flex-1 sm:flex-initial px-3.5 py-2 sm:py-1.5 rounded-md transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
               activeTab === 'analytics'
                 ? 'bg-white text-slate-900 shadow-xs'
                 : 'text-slate-600 hover:text-slate-900'
@@ -329,7 +329,7 @@ export const AdminBlock: React.FC<AdminBlockProps> = ({ onBack }) => {
             </div>
 
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs">
+              <table className="w-full text-left text-xs min-w-[620px]">
                 <thead className="bg-slate-50 text-slate-600 font-semibold border-b border-slate-200 uppercase tracking-wider text-[10px]">
                   <tr>
                     <th className="px-6 py-3">Physician</th>
@@ -453,7 +453,7 @@ export const AdminBlock: React.FC<AdminBlockProps> = ({ onBack }) => {
             </div>
 
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs">
+              <table className="w-full text-left text-xs min-w-[620px]">
                 <thead className="bg-slate-50 text-slate-600 font-semibold border-b border-slate-200 uppercase tracking-wider text-[10px]">
                   <tr>
                     <th className="px-6 py-3">Physician</th>
