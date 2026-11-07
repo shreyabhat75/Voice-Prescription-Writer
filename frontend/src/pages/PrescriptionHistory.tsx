@@ -8,6 +8,7 @@ import { apiClient } from '../api/client';
 import { PrescriptionListItem, HistoryFilter } from '../types';
 import { StatusBadge } from '../components/ui/StatusBadge';
 import { LoadingSpinner } from '../components/ui/LoadingSpinner';
+import { useAuth } from '../context/AuthContext';
 
 const FILTER_TABS: { key: HistoryFilter; label: string }[] = [
   { key: 'all',          label: 'All'          },
@@ -18,6 +19,7 @@ const FILTER_TABS: { key: HistoryFilter; label: string }[] = [
 
 export const PrescriptionHistory: React.FC = () => {
   const navigate = useNavigate();
+  const { doctor } = useAuth();
   const [prescriptions, setPrescriptions] = useState<PrescriptionListItem[]>([]);
   const [loading, setLoading]             = useState(true);
   const [search, setSearch]               = useState('');
@@ -25,12 +27,12 @@ export const PrescriptionHistory: React.FC = () => {
   const [selected, setSelected]           = useState<Set<string>>(new Set());
   const [batchDeleting, setBatchDeleting] = useState(false);
 
-  useEffect(() => { loadPrescriptions(); }, []);
+  useEffect(() => { loadPrescriptions(); }, [doctor?.name]);
 
   const loadPrescriptions = async () => {
     setLoading(true);
     try {
-      setPrescriptions(await apiClient.listPrescriptions());
+      setPrescriptions(await apiClient.listPrescriptions(doctor?.name));
     } catch (err) {
       console.error('Failed to load history:', err);
     } finally {

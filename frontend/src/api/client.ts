@@ -15,6 +15,30 @@ const api = axios.create({
   baseURL: API_BASE_URL ? `${API_BASE_URL}/api` : '/api',
 });
 
+// Automatically inject active doctor credentials into all outbound API calls
+api.interceptors.request.use((config) => {
+  try {
+    const sessionStr = localStorage.getItem('voicerx_doctor_session');
+    if (sessionStr) {
+      const session = JSON.parse(sessionStr);
+      if (session?.name) {
+        config.headers['X-Doctor-Name'] = session.name;
+      }
+      if (session?.id) {
+        config.headers['X-Doctor-Id'] = session.id;
+      }
+    } else {
+      const lastDoc = localStorage.getItem('voicerx_last_doctor');
+      if (lastDoc) {
+        config.headers['X-Doctor-Name'] = lastDoc;
+      }
+    }
+  } catch {
+    // Ignore storage parse exceptions
+  }
+  return config;
+});
+
 export const apiClient = {
   // Health & Connectivity Check
   async checkHealth(): Promise<{
@@ -30,8 +54,12 @@ export const apiClient = {
   },
 
   // Prescriptions
-  async createPrescription(notes?: string): Promise<Prescription> {
-    const res = await api.post<Prescription>('/prescriptions', { notes });
+  async createPrescription(notes?: string, doctorName?: string, doctorId?: string): Promise<Prescription> {
+    const res = await api.post<Prescription>('/prescriptions', {
+      notes,
+      doctor_name: doctorName,
+      doctor_id: doctorId,
+    });
     return res.data;
   },
 
@@ -40,8 +68,9 @@ export const apiClient = {
     return res.data;
   },
 
-  async listPrescriptions(): Promise<PrescriptionListItem[]> {
-    const res = await api.get<PrescriptionListItem[]>('/prescriptions');
+  async listPrescriptions(doctorName?: string): Promise<PrescriptionListItem[]> {
+    const params = doctorName ? { doctor_name: doctorName } : undefined;
+    const res = await api.get<PrescriptionListItem[]>('/prescriptions', { params });
     return res.data;
   },
 
@@ -185,6 +214,7 @@ export const apiClient = {
     query?: string;
     patient_id?: string;
     mobile_number?: string;
+    doctor_name?: string;
   }): Promise<any[]> {
     const res = await api.get('/patients/search', { params });
     return res.data;

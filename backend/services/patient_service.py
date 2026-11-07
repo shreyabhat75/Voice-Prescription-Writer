@@ -43,7 +43,7 @@ class PatientService:
     async def register_patient(
         self,
         name: str,
-        age: Optional[int] = None,
+        age: Optional[Any] = None,
         gender: Optional[str] = None,
         mobile_number: Optional[str] = None,
         actor_id: str = "dr_ananya_rao",
@@ -53,13 +53,20 @@ class PatientService:
         patient_id = await self.generate_patient_id()
         now = datetime.now().isoformat()
 
+        clean_age = None
+        if age is not None:
+            try:
+                clean_age = int(str(age).split()[0])
+            except Exception:
+                clean_age = None
+
         async with get_db() as db:
             await db.execute(
                 """
                 INSERT INTO patients (id, patient_id, name, age, gender, mobile_number, created_at, updated_at)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                 """,
-                (patient_uuid, patient_id, name.strip(), age, gender, mobile_number, now, now),
+                (patient_uuid, patient_id, name.strip(), clean_age, gender, mobile_number, now, now),
             )
             await db.commit()
 
@@ -75,7 +82,7 @@ class PatientService:
             id=patient_uuid,
             patient_id=patient_id,
             name=name.strip(),
-            age=age,
+            age=clean_age,
             gender=gender,
             mobile_number=mobile_number,
             created_at=now,
@@ -85,7 +92,7 @@ class PatientService:
     async def get_or_create_patient(
         self,
         name: str,
-        age: Optional[int] = None,
+        age: Optional[Any] = None,
         gender: Optional[str] = None,
         mobile_number: Optional[str] = None,
         actor_id: str = "dr_ananya_rao",
@@ -95,6 +102,13 @@ class PatientService:
         Avoids creating duplicate patient profiles when a known patient returns.
         """
         clean_name = name.strip()
+        clean_age = None
+        if age is not None:
+            try:
+                clean_age = int(str(age).split()[0])
+            except Exception:
+                clean_age = None
+
         async with get_db() as db:
             # 1. Search by mobile number if provided (highest precision)
             if mobile_number:
@@ -116,10 +130,10 @@ class PatientService:
                     )
 
             # 2. Search by exact normalized name and age if provided
-            if age is not None:
+            if clean_age is not None:
                 cur = await db.execute(
                     "SELECT * FROM patients WHERE LOWER(name) = LOWER(?) AND age = ? ORDER BY created_at ASC LIMIT 1",
-                    (clean_name, age),
+                    (clean_name, clean_age),
                 )
             else:
                 cur = await db.execute(
@@ -142,7 +156,7 @@ class PatientService:
         # 3. Not found: Register new patient
         return await self.register_patient(
             name=clean_name,
-            age=age,
+            age=clean_age,
             gender=gender,
             mobile_number=mobile_number,
             actor_id=actor_id,
@@ -153,11 +167,29 @@ class PatientService:
         query: Optional[str] = None,
         patient_id: Optional[str] = None,
         mobile_number: Optional[str] = None,
+        doctor_name: Optional[str] = None,
         limit: int = 20,
     ) -> list[PatientRecord]:
-        """Search patients by name, unique patient ID, or mobile number."""
+        """Search patients by name, unique patient ID, mobile number, or attending doctor."""
         sql = "SELECT * FROM patients WHERE 1=1"
         params: list[Any] = []
+
+        if doctor_name and doctor_name.strip():
+            clean_doc = doctor_name.strip().replace("Dr.", "").replace("Dr ", "").strip()
+            like_pat = f"%{clean_doc}%"
+            sql += """ AND (
+                patients.id IN (
+                    SELECT patient_id FROM prescriptions WHERE patient_id IS NOT NULL AND (
+                        LOWER(COALESCE(doctor_name, '')) LIKE LOWER(?)
+                        OR id IN (SELECT prescription_id FROM confirmation_records WHERE LOWER(confirmed_by) LIKE LOWER(?))
+                        OR id IN (SELECT prescription_id FROM patient_audit_logs WHERE LOWER(actor_id) LIKE LOWER(?))
+                    )
+                )
+                OR patients.id IN (
+                    SELECT patient_id FROM patient_audit_logs WHERE patient_id IS NOT NULL AND LOWER(actor_id) LIKE LOWER(?)
+                )
+            )"""
+            params.extend([like_pat, like_pat, like_pat, like_pat])
 
         if patient_id:
             sql += " AND (patient_id = ? OR patient_id LIKE ?)"

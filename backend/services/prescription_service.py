@@ -41,7 +41,12 @@ class PrescriptionService:
         self.voice_edit_svc = VoiceEditService(llm_provider=self.llm_provider)
         self.pdf_generator = PrescriptionPDFGenerator()
 
-    async def create_prescription(self, notes: str | None = None) -> PrescriptionResponse:
+    async def create_prescription(
+        self,
+        notes: str | None = None,
+        doctor_name: str | None = None,
+        doctor_id: str | None = None,
+    ) -> PrescriptionResponse:
         """Initialize an empty prescription in 'recording' status."""
         p_id = str(uuid.uuid4())
         now = datetime.now().isoformat()
@@ -69,6 +74,8 @@ class PrescriptionService:
             audio_url=None,
             validation_issues=[],
             clarification_questions=[],
+            doctor_name=doctor_name,
+            doctor_id=doctor_id,
             created_at=now,
             updated_at=now,
             version=1,
@@ -79,8 +86,9 @@ class PrescriptionService:
                 """
                 INSERT INTO prescriptions (
                     id, status, patient_json, clinical_json, validation_json,
-                    clarification_json, version, created_at, updated_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    clarification_json, version, created_at, updated_at,
+                    doctor_name, doctor_id
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     rx.id,
@@ -92,6 +100,8 @@ class PrescriptionService:
                     rx.version,
                     rx.created_at,
                     rx.updated_at,
+                    rx.doctor_name,
+                    rx.doctor_id,
                 ),
             )
             # Store initial version snapshot
@@ -133,14 +143,61 @@ class PrescriptionService:
             ) as cursor:
                 med_rows = await cursor.fetchall()
 
-        medicines: list[MedicineItem] = [
-            MedicineItem.model_validate_json(m_row["medicine_json"]) for m_row in med_rows
-        ]
+        medicines: list[MedicineItem] = []
+        for m_row in med_rows:
+            raw_m = m_row["medicine_json"]
+            if isinstance(raw_m, dict):
+                medicines.append(MedicineItem.model_validate(raw_m))
+            elif isinstance(raw_m, str):
+                medicines.append(MedicineItem.model_validate_json(raw_m))
 
-        patient = PatientInfo.model_validate_json(row["patient_json"])
-        clinical = ClinicalInfo.model_validate_json(row["clinical_json"])
-        val_issues = json.loads(row["validation_json"]) if row["validation_json"] else []
-        clar_questions = json.loads(row["clarification_json"]) if row["clarification_json"] else []
+        raw_patient = row["patient_json"]
+        if isinstance(raw_patient, dict):
+            patient = PatientInfo.model_validate(raw_patient)
+        elif isinstance(raw_patient, str):
+            patient = PatientInfo.model_validate_json(raw_patient)
+        else:
+            patient = PatientInfo(
+                name=SourceEvidence(status="not_mentioned"),
+                age=SourceEvidence(status="not_mentioned"),
+                sex=SourceEvidence(status="not_mentioned"),
+            )
+
+        raw_clinical = row["clinical_json"]
+        if isinstance(raw_clinical, dict):
+            clinical = ClinicalInfo.model_validate(raw_clinical)
+        elif isinstance(raw_clinical, str):
+            clinical = ClinicalInfo.model_validate_json(raw_clinical)
+        else:
+            clinical = ClinicalInfo(
+                chief_complaints=SourceEvidence(status="not_mentioned"),
+                diagnosis=SourceEvidence(status="not_mentioned"),
+                investigations=SourceEvidence(status="not_mentioned"),
+                advice=SourceEvidence(status="not_mentioned"),
+                follow_up=SourceEvidence(status="not_mentioned"),
+            )
+
+        val_raw = row["validation_json"]
+        if isinstance(val_raw, list):
+            val_issues = val_raw
+        elif isinstance(val_raw, str) and val_raw.strip():
+            try:
+                val_issues = json.loads(val_raw)
+            except Exception:
+                val_issues = []
+        else:
+            val_issues = []
+
+        clar_raw = row["clarification_json"]
+        if isinstance(clar_raw, list):
+            clar_questions = clar_raw
+        elif isinstance(clar_raw, str) and clar_raw.strip():
+            try:
+                clar_questions = json.loads(clar_raw)
+            except Exception:
+                clar_questions = []
+        else:
+            clar_questions = []
 
         # Resolve permanent patient ID if linked
         row_keys = row.keys() if hasattr(row, "keys") else []
@@ -156,11 +213,20 @@ class PrescriptionService:
         edited_tx = row["edited_transcript"] if "edited_transcript" in row_keys else None
         pdf_path = row["pdf_path"] if "pdf_path" in row_keys else None
         verified_at = row["verified_at"] if "verified_at" in row_keys else (row["confirmed_at"] if row["status"] == "confirmed" else None)
+        doc_name = row["doctor_name"] if "doctor_name" in row_keys else None
+        doc_id = row["doctor_id"] if "doctor_id" in row_keys else None
+
+        created_at_val = row["created_at"].isoformat() if hasattr(row["created_at"], "isoformat") else str(row["created_at"])
+        updated_at_val = row["updated_at"].isoformat() if hasattr(row["updated_at"], "isoformat") else str(row["updated_at"])
+        confirmed_at_val = row["confirmed_at"].isoformat() if hasattr(row["confirmed_at"], "isoformat") else row["confirmed_at"]
+        verified_at_val = verified_at.isoformat() if hasattr(verified_at, "isoformat") else verified_at
 
         return PrescriptionResponse(
             id=row["id"],
             patient_id=pid,
             permanent_patient_id=perm_pid,
+            doctor_id=doc_id,
+            doctor_name=doc_name,
             status=row["status"],
             patient=patient,
             clinical=clinical,
@@ -171,35 +237,71 @@ class PrescriptionService:
             audio_url=row["audio_url"],
             validation_issues=val_issues,
             clarification_questions=clar_questions,
-            created_at=row["created_at"],
-            updated_at=row["updated_at"],
-            confirmed_at=row["confirmed_at"],
-            verified_at=verified_at,
+            created_at=created_at_val,
+            updated_at=updated_at_val,
+            confirmed_at=confirmed_at_val,
+            verified_at=verified_at_val,
             version=row["version"],
         )
 
-    async def list_prescriptions(self) -> list[dict[str, Any]]:
-        """List all prescriptions with basic metadata."""
+    async def list_prescriptions(self, doctor_name: str | None = None) -> list[dict[str, Any]]:
+        """List all prescriptions with basic metadata, optionally filtered by attending doctor."""
+        where_clause = ""
+        params: list[Any] = []
+
+        if doctor_name and doctor_name.strip():
+            clean_doc = doctor_name.strip().replace("Dr.", "").replace("Dr ", "").strip()
+            like_pat = f"%{clean_doc}%"
+            where_clause = """
+                WHERE (
+                    LOWER(COALESCE(p.doctor_name, '')) LIKE LOWER(?)
+                    OR p.id IN (SELECT prescription_id FROM confirmation_records WHERE LOWER(confirmed_by) LIKE LOWER(?))
+                    OR p.id IN (SELECT prescription_id FROM patient_audit_logs WHERE LOWER(actor_id) LIKE LOWER(?))
+                )
+            """
+            params = [like_pat, like_pat, like_pat]
+
+        sql = f"""
+            SELECT p.id, p.status, p.patient_json, p.version, p.created_at, p.updated_at, p.confirmed_at,
+                   p.doctor_name, p.doctor_id,
+                   COUNT(m.id) as medicine_count
+            FROM prescriptions p
+            LEFT JOIN medicine_items m ON p.id = m.prescription_id
+            {where_clause}
+            GROUP BY p.id, p.status, p.patient_json, p.version, p.created_at, p.updated_at, p.confirmed_at, p.doctor_name, p.doctor_id
+            ORDER BY p.updated_at DESC
+        """
+
         async with get_db() as db:
-            async with db.execute(
-                """
-                SELECT p.id, p.status, p.patient_json, p.version, p.created_at, p.updated_at, p.confirmed_at,
-                       COUNT(m.id) as medicine_count
-                FROM prescriptions p
-                LEFT JOIN medicine_items m ON p.id = m.prescription_id
-                GROUP BY p.id
-                ORDER BY p.updated_at DESC
-                """
-            ) as cursor:
-                rows = await cursor.fetchall()
+            cur = await db.execute(sql, tuple(params))
+            rows = await cur.fetchall()
 
         results = []
         for r in rows:
-            p_data = json.loads(r["patient_json"]) if r["patient_json"] else {}
-            name_val = p_data.get("name", {}).get("value") or "Unnamed Patient"
+            raw_p = r["patient_json"]
+            if isinstance(raw_p, str):
+                try:
+                    p_data = json.loads(raw_p)
+                except Exception:
+                    p_data = {}
+            elif isinstance(raw_p, dict):
+                p_data = raw_p
+            else:
+                p_data = {}
+
+            name_entry = p_data.get("name")
+            if isinstance(name_entry, dict):
+                name_val = name_entry.get("value") or "Unnamed Patient"
+            elif isinstance(name_entry, str) and name_entry.strip():
+                name_val = name_entry.strip()
+            else:
+                name_val = "Unnamed Patient"
+
             results.append({
                 "id": r["id"],
                 "patient_name": name_val,
+                "doctor_name": r["doctor_name"] if "doctor_name" in r.keys() else None,
+                "doctor_id": r["doctor_id"] if "doctor_id" in r.keys() else None,
                 "status": r["status"],
                 "version": r["version"],
                 "medicine_count": r["medicine_count"],
@@ -695,10 +797,10 @@ class PrescriptionService:
             await db.execute(
                 """
                 UPDATE prescriptions
-                SET status = 'confirmed', confirmed_at = ?, verified_at = ?, patient_id = ?, updated_at = ?
+                SET status = 'confirmed', confirmed_at = ?, verified_at = ?, patient_id = ?, updated_at = ?, doctor_name = ?
                 WHERE id = ?
                 """,
-                (now, now, patient_uuid, now, prescription_id),
+                (now, now, patient_uuid, now, doctor_name, prescription_id),
             )
             # Create confirmation audit record
             await db.execute(

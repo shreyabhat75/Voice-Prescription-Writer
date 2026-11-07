@@ -6,9 +6,10 @@ provenance, confidence, and review status for each piece of information.
 
 from __future__ import annotations
 
-from typing import Any, Literal, Optional
+from datetime import datetime
+from typing import Any, Literal, Optional, Union
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_serializer
 
 from backend.models.patient import GenderDetectionResult
 
@@ -115,13 +116,21 @@ class PrescriptionResponse(BaseModel):
     clarification_questions: list[dict] = Field(default_factory=list)
     patient_id: Optional[str] = None
     permanent_patient_id: Optional[str] = None
+    doctor_id: Optional[str] = None
+    doctor_name: Optional[str] = None
     edited_transcript: Optional[str] = None
     pdf_path: Optional[str] = None
-    verified_at: Optional[str] = None
-    created_at: str = ""
-    updated_at: str = ""
-    confirmed_at: Optional[str] = None
+    verified_at: Optional[Union[str, datetime]] = None
+    created_at: Union[str, datetime] = ""
+    updated_at: Union[str, datetime] = ""
+    confirmed_at: Optional[Union[str, datetime]] = None
     version: int = 1
+
+    @field_serializer("created_at", "updated_at", "confirmed_at", "verified_at", when_used="json")
+    def serialize_dt(self, dt_val: Optional[Union[str, datetime]]) -> Optional[str]:
+        if dt_val is None:
+            return None
+        return dt_val.isoformat() if isinstance(dt_val, datetime) else dt_val
 
 
 # ---------------------------------------------------------------------------
@@ -132,6 +141,8 @@ class PrescriptionCreate(BaseModel):
     """Body for creating a brand-new prescription (before any audio)."""
 
     notes: Optional[str] = None
+    doctor_name: Optional[str] = None
+    doctor_id: Optional[str] = None
 
 
 class PrescriptionUpdate(BaseModel):
@@ -140,3 +151,5 @@ class PrescriptionUpdate(BaseModel):
     patient: Optional[PatientInfo] = None
     clinical: Optional[ClinicalInfo] = None
     medicines: Optional[list[MedicineItem]] = None
+    doctor_name: Optional[str] = None
+    doctor_id: Optional[str] = None

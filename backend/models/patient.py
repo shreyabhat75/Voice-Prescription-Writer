@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
-from typing import Literal, Optional
-from pydantic import BaseModel, Field
+from datetime import datetime
+from typing import Literal, Optional, Union
+from pydantic import BaseModel, Field, field_serializer
 
 
 class GenderDetectionRequest(BaseModel):
@@ -39,8 +40,12 @@ class PatientRecord(BaseModel):
     age: Optional[int] = None
     gender: Optional[str] = None
     mobile_number: Optional[str] = None
-    created_at: str
-    updated_at: str
+    created_at: Union[str, datetime]
+    updated_at: Union[str, datetime]
+
+    @field_serializer("created_at", "updated_at", when_used="json")
+    def serialize_dt(self, dt_val: Union[str, datetime]) -> str:
+        return dt_val.isoformat() if isinstance(dt_val, datetime) else dt_val
 
 
 class PatientCreateRequest(BaseModel):

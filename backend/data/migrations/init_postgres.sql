@@ -17,6 +17,8 @@ CREATE INDEX IF NOT EXISTS idx_patients_mobile ON patients(mobile_number);
 CREATE TABLE IF NOT EXISTS prescriptions (
     id              VARCHAR(64) PRIMARY KEY,
     patient_id      VARCHAR(64) REFERENCES patients(id) ON DELETE SET NULL,
+    doctor_id       VARCHAR(64),
+    doctor_name     VARCHAR(150),
     status          VARCHAR(50) NOT NULL DEFAULT 'recording'
         CHECK (status IN ('recording','transcribing','structuring','review','confirmed')),
     patient_json    JSONB NOT NULL DEFAULT '{}'::jsonb,
@@ -34,6 +36,7 @@ CREATE TABLE IF NOT EXISTS prescriptions (
     verified_at     TIMESTAMPTZ
 );
 CREATE INDEX IF NOT EXISTS idx_prescriptions_patient ON prescriptions(patient_id);
+CREATE INDEX IF NOT EXISTS idx_prescriptions_doctor ON prescriptions(doctor_name);
 CREATE INDEX IF NOT EXISTS idx_prescriptions_status_date ON prescriptions(status, updated_at DESC);
 
 CREATE TABLE IF NOT EXISTS medicine_items (

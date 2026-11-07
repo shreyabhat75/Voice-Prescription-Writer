@@ -166,6 +166,24 @@ class AsyncPgCursor:
         pass
 
 
+class AsyncPgExecuteTask:
+    """Dual coroutine and async context manager allowing both `await db.execute()` and `async with db.execute()`."""
+
+    def __init__(self, coro: Any) -> None:
+        self._coro = coro
+        self._cursor: AsyncPgCursor | None = None
+
+    def __await__(self):
+        return self._coro.__await__()
+
+    async def __aenter__(self) -> AsyncPgCursor:
+        self._cursor = await self._coro
+        return self._cursor
+
+    async def __aexit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
+        pass
+
+
 class AsyncPgConnection:
     """Async connection wrapper around asyncpg.Connection supporting unified database methods."""
 
@@ -173,27 +191,30 @@ class AsyncPgConnection:
         self._conn = connection
         self._tx = transaction
 
-    async def execute(self, sql: str, params: Any = ()) -> AsyncPgCursor:
-        pg_sql = _convert_qmarks_to_dollars(sql)
-        raw_args = list(params) if isinstance(params, (tuple, list)) else []
-        clean_args = []
-        for arg in raw_args:
-            if isinstance(arg, str) and len(arg) >= 19 and ("T" in arg or ("-" in arg and ":" in arg)):
-                try:
-                    dt = datetime.fromisoformat(arg)
-                    clean_args.append(dt)
-                    continue
-                except ValueError:
-                    pass
-            clean_args.append(arg)
+    def execute(self, sql: str, params: Any = ()) -> AsyncPgExecuteTask:
+        async def _run() -> AsyncPgCursor:
+            pg_sql = _convert_qmarks_to_dollars(sql)
+            raw_args = list(params) if isinstance(params, (tuple, list)) else []
+            clean_args = []
+            for arg in raw_args:
+                if isinstance(arg, str) and len(arg) >= 19 and ("T" in arg or ("-" in arg and ":" in arg)):
+                    try:
+                        dt = datetime.fromisoformat(arg)
+                        clean_args.append(dt)
+                        continue
+                    except ValueError:
+                        pass
+                clean_args.append(arg)
 
-        # If query is a SELECT, fetch rows; otherwise execute
-        if re.match(r"^\s*(?:SELECT|WITH)\b", pg_sql, re.I):
-            records = await self._conn.fetch(pg_sql, *clean_args)
-            return AsyncPgCursor(records)
-        else:
-            await self._conn.execute(pg_sql, *clean_args)
-            return AsyncPgCursor([])
+            # If query is a SELECT, fetch rows; otherwise execute
+            if re.match(r"^\s*(?:SELECT|WITH)\b", pg_sql, re.I):
+                records = await self._conn.fetch(pg_sql, *clean_args)
+                return AsyncPgCursor(records)
+            else:
+                await self._conn.execute(pg_sql, *clean_args)
+                return AsyncPgCursor([])
+
+        return AsyncPgExecuteTask(_run())
 
     async def fetch_all(self, sql: str, params: Any = ()) -> list[Any]:
         cur = await self.execute(sql, params)
@@ -258,6 +279,13 @@ async def init_db(db_target: str | None = None) -> None:
         migration_sql = _load_migration_sql(is_pg=True)
         async with _pg_pool.acquire() as conn:
             await conn.execute(migration_sql)
+            # Add doctor columns if not already present
+            try:
+                await conn.execute("ALTER TABLE prescriptions ADD COLUMN IF NOT EXISTS doctor_name VARCHAR(150);")
+                await conn.execute("ALTER TABLE prescriptions ADD COLUMN IF NOT EXISTS doctor_id VARCHAR(64);")
+                await conn.execute("CREATE INDEX IF NOT EXISTS idx_prescriptions_doctor ON prescriptions(doctor_name);")
+            except Exception as e:
+                logger.warning("Postgres column migration check notice: %s", e)
         logger.info("PostgreSQL database initialized successfully with schema migrations.")
 
     else:
@@ -274,6 +302,8 @@ async def init_db(db_target: str | None = None) -> None:
                 ("edited_transcript", "TEXT"),
                 ("pdf_path", "TEXT"),
                 ("verified_at", "TEXT"),
+                ("doctor_name", "TEXT"),
+                ("doctor_id", "TEXT"),
             ]:
                 try:
                     db._conn.execute(f"ALTER TABLE prescriptions ADD COLUMN {col_name} {col_type};")
@@ -284,6 +314,7 @@ async def init_db(db_target: str | None = None) -> None:
 
             try:
                 db._conn.execute("CREATE INDEX IF NOT EXISTS idx_prescriptions_patient ON prescriptions(patient_id);")
+                db._conn.execute("CREATE INDEX IF NOT EXISTS idx_prescriptions_doctor ON prescriptions(doctor_name);")
             except sqlite3.OperationalError:
                 pass
 

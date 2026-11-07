@@ -17,6 +17,8 @@ CREATE INDEX IF NOT EXISTS idx_patients_mobile ON patients(mobile_number);
 CREATE TABLE IF NOT EXISTS prescriptions (
     id              TEXT PRIMARY KEY,
     patient_id      TEXT,
+    doctor_id       TEXT,
+    doctor_name     TEXT,
     status          TEXT NOT NULL DEFAULT 'recording'
         CHECK (status IN ('recording','transcribing','structuring','review','confirmed')),
     patient_json    TEXT NOT NULL DEFAULT '{}',
@@ -149,4 +151,5 @@ CREATE INDEX IF NOT EXISTS idx_audit_patient ON patient_audit_logs(patient_id);
 
 -- Performance Optimization Indexes
 CREATE INDEX IF NOT EXISTS idx_prescriptions_status_date ON prescriptions(status, updated_at DESC);
+CREATE INDEX IF NOT EXISTS idx_prescriptions_doctor ON prescriptions(doctor_name);
 CREATE INDEX IF NOT EXISTS idx_medicine_items_rx_idx ON medicine_items(prescription_id, item_index);

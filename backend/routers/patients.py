@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 from typing import Optional
-from fastapi import APIRouter, HTTPException, Query, Request, status
+from fastapi import APIRouter, Header, HTTPException, Query, Request, status
 
 from backend.models.patient import (
     GenderDetectionRequest,
@@ -39,12 +39,16 @@ async def search_patients(
     query: Optional[str] = Query(None, description="Name, PID, or partial mobile query"),
     patient_id: Optional[str] = Query(None, description="Exact or prefix Patient ID e.g. PID-2026-0001"),
     mobile_number: Optional[str] = Query(None, description="Exact or suffix mobile number"),
+    doctor_name: Optional[str] = Query(None, description="Filter patients by attending doctor"),
+    x_doctor_name: Optional[str] = Header(None, alias="X-Doctor-Name"),
     limit: int = Query(20, ge=1, le=100),
 ):
+    doc = doctor_name or x_doctor_name
     return await patient_svc.search_patients(
         query=query,
         patient_id=patient_id,
         mobile_number=mobile_number,
+        doctor_name=doc,
         limit=limit,
     )
 

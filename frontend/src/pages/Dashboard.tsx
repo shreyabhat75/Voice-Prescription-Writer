@@ -20,13 +20,13 @@ export const Dashboard: React.FC = () => {
   useEffect(() => {
     setLoading(true);
     Promise.all([
-      apiClient.listPrescriptions(),
+      apiClient.listPrescriptions(doctor?.name),
       apiClient.checkHealth().catch(() => null),
     ]).then(([rxList, h]) => {
       setPrescriptions(rxList);
       if (h) setHealth(h);
     }).finally(() => setLoading(false));
-  }, []);
+  }, [doctor?.name]);
 
   const today = new Date().toDateString();
   const todayRx      = prescriptions.filter((p) => new Date(p.created_at).toDateString() === today);
