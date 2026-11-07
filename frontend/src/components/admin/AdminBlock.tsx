@@ -14,14 +14,16 @@ import {
   ClipboardCheck,
   TrendingUp,
   Award,
+  LogOut,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
 interface AdminBlockProps {
   onBack?: () => void;
+  onSignOut?: () => void;
 }
 
-export const AdminBlock: React.FC<AdminBlockProps> = ({ onBack }) => {
+export const AdminBlock: React.FC<AdminBlockProps> = ({ onBack, onSignOut }) => {
   const { roster, addDoctor, removeDoctor } = useAuth();
   const [activeTab, setActiveTab] = useState<'roster' | 'analytics'>('roster');
   const [isAddingDoctor, setIsAddingDoctor] = useState(false);
@@ -114,32 +116,46 @@ export const AdminBlock: React.FC<AdminBlockProps> = ({ onBack }) => {
           </button>
         ) : <div />}
 
-        {/* Tab Switcher */}
-        <div className="flex items-center gap-1 bg-slate-200/80 p-1 rounded-lg text-xs font-semibold w-full sm:w-auto">
-          <button
-            type="button"
-            onClick={() => setActiveTab('roster')}
-            className={`flex-1 sm:flex-initial px-3.5 py-2 sm:py-1.5 rounded-md transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
-              activeTab === 'roster'
-                ? 'bg-white text-slate-900 shadow-xs'
-                : 'text-slate-600 hover:text-slate-900'
-            }`}
-          >
-            <Users className="w-3.5 h-3.5 text-blue-600" />
-            Doctor Management ({roster.length})
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab('analytics')}
-            className={`flex-1 sm:flex-initial px-3.5 py-2 sm:py-1.5 rounded-md transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
-              activeTab === 'analytics'
-                ? 'bg-white text-slate-900 shadow-xs'
-                : 'text-slate-600 hover:text-slate-900'
-            }`}
-          >
-            <Activity className="w-3.5 h-3.5 text-blue-600" />
-            Performance Analytics
-          </button>
+        {/* Tab Switcher & Security Controls */}
+        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+          <div className="flex items-center gap-1 bg-slate-200/80 p-1 rounded-lg text-xs font-semibold w-full sm:w-auto">
+            <button
+              type="button"
+              onClick={() => setActiveTab('roster')}
+              className={`flex-1 sm:flex-initial px-3.5 py-2 sm:py-1.5 rounded-md transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                activeTab === 'roster'
+                  ? 'bg-white text-slate-900 shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <Users className="w-3.5 h-3.5 text-blue-600" />
+              Doctor Management ({roster.length})
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab('analytics')}
+              className={`flex-1 sm:flex-initial px-3.5 py-2 sm:py-1.5 rounded-md transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                activeTab === 'analytics'
+                  ? 'bg-white text-slate-900 shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <Activity className="w-3.5 h-3.5 text-blue-600" />
+              Performance Analytics
+            </button>
+          </div>
+
+          {onSignOut && (
+            <button
+              type="button"
+              onClick={onSignOut}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-rose-700 hover:text-rose-800 hover:bg-rose-50 border border-rose-200 transition-colors cursor-pointer shadow-2xs"
+              title="Lock administrative console and require re-authentication"
+            >
+              <LogOut className="w-3.5 h-3.5 text-rose-600" />
+              <span>Lock Console</span>
+            </button>
+          )}
         </div>
       </div>
 

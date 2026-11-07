@@ -10,10 +10,12 @@ import {
 } from 'lucide-react';
 import { DoctorStation } from '../components/auth/DoctorStation';
 import { AdminBlock } from '../components/admin/AdminBlock';
+import { AdminLogin } from '../components/admin/AdminLogin';
 
 export const LoginPage: React.FC = () => {
   const navigate = useNavigate();
   const [view, setView] = useState<'portal' | 'station' | 'admin'>('portal');
+  const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
 
   const handleEnterDoctorStation = () => {
     setView('station');
@@ -44,7 +46,10 @@ export const LoginPage: React.FC = () => {
             {view !== 'portal' && (
               <button
                 type="button"
-                onClick={() => setView('portal')}
+                onClick={() => {
+                  setView('portal');
+                  setIsAdminAuthenticated(false);
+                }}
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-700 hover:text-slate-900 hover:bg-slate-100 border border-slate-200 shadow-xs transition-colors cursor-pointer"
               >
                 <ArrowLeft className="w-4 h-4" />
@@ -122,9 +127,22 @@ export const LoginPage: React.FC = () => {
           <DoctorStation onBack={() => setView('portal')} />
         )}
 
-        {/* View 3: Admin Roster & Analytics */}
+        {/* View 3: Admin Authentication & Console */}
         {view === 'admin' && (
-          <AdminBlock onBack={() => setView('portal')} />
+          !isAdminAuthenticated ? (
+            <AdminLogin
+              onAuthenticated={() => setIsAdminAuthenticated(true)}
+              onBack={() => setView('portal')}
+            />
+          ) : (
+            <AdminBlock
+              onBack={() => {
+                setIsAdminAuthenticated(false);
+                setView('portal');
+              }}
+              onSignOut={() => setIsAdminAuthenticated(false)}
+            />
+          )
         )}
       </main>
 
