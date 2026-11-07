@@ -5,6 +5,7 @@ Starts both backend and frontend servers for local development.
 import subprocess
 import sys
 import os
+import shutil
 import time
 from pathlib import Path
 
@@ -65,20 +66,21 @@ def start_backend():
     env = os.environ.copy()
     env["PYTHONPATH"] = str(PROJECT_ROOT)
     
+    cmd = [
+        sys.executable,
+        "-m",
+        "uvicorn",
+        "backend.main:app",
+        "--host",
+        "0.0.0.0",
+        "--port",
+        "8000",
+    ]
+    if "--reload" in sys.argv:
+        cmd.extend(["--reload", "--reload-dir", "backend"])
+
     process = subprocess.Popen(
-        [
-            sys.executable,
-            "-m",
-            "uvicorn",
-            "backend.main:app",
-            "--host",
-            "0.0.0.0",
-            "--port",
-            "8000",
-            "--reload",
-            "--reload-dir",
-            "backend",
-        ],
+        cmd,
         cwd=str(PROJECT_ROOT),
         env=env,
     )
@@ -90,15 +92,16 @@ def start_frontend():
     frontend_dir = PROJECT_ROOT / "frontend"
     
     if not frontend_dir.exists():
-        print("[ERROR] Frontend directory not found!")
+        print("[ERROR] Frontend directory not found!", flush=True)
         return None
     
-    print("[STARTING] Frontend dev server on http://localhost:5173...")
+    print("[STARTING] Frontend dev server on http://localhost:5173...", flush=True)
     
+    npm_bin = shutil.which("npm") or "npm"
     process = subprocess.Popen(
-        ["npm", "run", "dev"],
+        [npm_bin, "run", "dev"],
         cwd=str(frontend_dir),
-        shell=True,
+        shell=False,
     )
     return process
 
