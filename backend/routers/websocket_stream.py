@@ -58,6 +58,7 @@ async def websocket_transcribe(websocket: WebSocket, prescription_id: str):
 
     audio_chunks: list[bytes] = []
     final_transcript_parts: list[str] = []
+    latest_interim: list[str] = []
     deepgram_ws = None
     receiver_task_handle = None
     auto_structure_requested = False
@@ -70,9 +71,18 @@ async def websocket_transcribe(websocket: WebSocket, prescription_id: str):
             import websockets
 
             headers = {"Authorization": f"Token {settings.DEEPGRAM_API_KEY}"}
+            medical_keywords = [
+                "Dolo:2", "Pantoprazole:2", "Pan-D:2", "Augmentin:2", "Paracetamol:2",
+                "Azithromycin:2", "Cetirizine:2", "Combiflam:2", "Montelukast:2", "Deriphyllin:2",
+                "Ambrodil:2", "Hydrocortisone:2", "Budecort:2", "Duolin:2", "Sumatriptan:2",
+                "Amitriptyline:2", "Propranolol:2", "Ondansetron:2", "Econorm:2", "Amlodipine:2",
+                "Ecosprin:2", "Sucralfate:2", "Domperidone:2", "TDS:2", "BD:2", "OD:2", "SOS:2",
+                "stat:2", "IV:2", "nebulization:2", "tablet:2", "capsule:2", "syrup:2"
+            ]
+            kw_param = "&keywords=" + "&keywords=".join(medical_keywords)
             dg_url = (
                 f"wss://api.deepgram.com/v1/listen?"
-                f"model={dg_model}&language={dg_lang}&punctuate=true&interim_results=true&smart_format=true"
+                f"model={dg_model}&language={dg_lang}&punctuate=true&interim_results=true&smart_format=true{kw_param}"
             )
 
             try:
@@ -82,7 +92,7 @@ async def websocket_transcribe(websocket: WebSocket, prescription_id: str):
                     logger.warning("Could not connect to nova-2-medical, falling back to nova-2...")
                     dg_url = (
                         f"wss://api.deepgram.com/v1/listen?"
-                        f"model=nova-2&language={dg_lang}&punctuate=true&interim_results=true&smart_format=true"
+                        f"model=nova-2&language={dg_lang}&punctuate=true&interim_results=true&smart_format=true{kw_param}"
                     )
                     deepgram_ws = await websockets.connect(dg_url, additional_headers=headers)
 
@@ -98,6 +108,11 @@ async def websocket_transcribe(websocket: WebSocket, prescription_id: str):
                             if text:
                                 if is_final:
                                     final_transcript_parts.append(text)
+                                    latest_interim.clear()
+                                else:
+                                    latest_interim.clear()
+                                    latest_interim.append(text)
+
                                 await websocket.send_json({
                                     "type": "transcript",
                                     "text": text,
@@ -147,17 +162,29 @@ async def websocket_transcribe(websocket: WebSocket, prescription_id: str):
     except Exception as e:
         logger.error("Error during live WebSocket streaming: %s", e)
 
-    # Clean up Deepgram connection
+    # Clean up Deepgram connection gracefully
     if is_ws_connected(deepgram_ws):
         try:
             await deepgram_ws.send(json.dumps({"type": "CloseStream"}))
-            await asyncio.sleep(0.5)
+            # Allow Deepgram up to 1.2s to deliver trailing transcripts
+            if receiver_task_handle and not receiver_task_handle.done():
+                try:
+                    await asyncio.wait_for(asyncio.shield(receiver_task_handle), timeout=1.2)
+                except (asyncio.TimeoutError, Exception):
+                    pass
             await deepgram_ws.close()
         except Exception:
             pass
 
     if receiver_task_handle and not receiver_task_handle.done():
         receiver_task_handle.cancel()
+
+    # Reconcile trailing interim speech that was not finalized
+    if latest_interim and latest_interim[0]:
+        trailing = latest_interim[0].strip()
+        last_final = final_transcript_parts[-1] if final_transcript_parts else ""
+        if trailing and trailing not in last_final:
+            final_transcript_parts.append(trailing)
 
     # Process and finalize accumulated audio
     if not audio_chunks:
@@ -177,14 +204,14 @@ async def websocket_transcribe(websocket: WebSocket, prescription_id: str):
     # Build full transcript
     full_transcript = " ".join(final_transcript_parts).strip()
 
-    # If Deepgram did not emit final parts or fallback needed, transcribe the saved file
-    if not full_transcript:
+    # If stream produced no transcript or is suspiciously short for audio > 3s, run provider transcribe fallback
+    if not full_transcript or (len(full_audio_bytes) > 40000 and len(full_transcript.split()) < 3):
         try:
             stt_res = await svc.stt_provider.transcribe(str(audio_path), audio_format="webm")
-            full_transcript = stt_res.text.strip()
+            if stt_res.text.strip():
+                full_transcript = stt_res.text.strip()
         except Exception as ex:
             logger.warning("STT transcription fallback failed: %s", ex)
-            full_transcript = ""
 
     # Persist audio record & transcript in SQLite
     async with get_db() as db:

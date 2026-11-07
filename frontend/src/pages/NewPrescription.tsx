@@ -113,8 +113,10 @@ export const NewPrescription: React.FC = () => {
             setInterimText('');
             setEditedTranscript(complete);
             setTranscriptStage('review');
+            setProcessingStep(null);
           } else if (data.type === 'error') {
             setError(data.message || 'Streaming error.');
+            setProcessingStep(null);
           }
         } catch (err) {
           console.debug('WebSocket parse error:', err);
@@ -130,6 +132,7 @@ export const NewPrescription: React.FC = () => {
   };
 
   const handleStopLiveRecording = async () => {
+    setProcessingStep('Finalizing transcription…');
     const blob = await stopRecording();
     if (wsRef.current?.readyState === WebSocket.OPEN) {
       wsRef.current.send(JSON.stringify({ type: 'stop', auto_structure: false }));
@@ -138,7 +141,6 @@ export const NewPrescription: React.FC = () => {
     if (activePrescriptionId && blob && !finalizedText) {
       setTimeout(async () => {
         try {
-          setProcessingStep('Finalizing transcription…');
           await apiClient.uploadAudio(activePrescriptionId, blob);
           const rx = await apiClient.transcribe(activePrescriptionId);
           const text = rx.raw_transcript || '';
@@ -152,7 +154,11 @@ export const NewPrescription: React.FC = () => {
         }
       }, 800);
     } else {
-      setTranscriptStage('review');
+      // Fallback timer ensures review stage unlocks even on network delay
+      setTimeout(() => {
+        setTranscriptStage((curr) => (curr === 'recording' ? 'review' : curr));
+        setProcessingStep(null);
+      }, 1200);
     }
   };
 

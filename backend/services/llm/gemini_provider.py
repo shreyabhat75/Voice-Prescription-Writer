@@ -53,10 +53,17 @@ class GeminiProvider(LLMProvider):
             data = resp.json()
 
         elapsed_ms = (time.monotonic() - start) * 1000
-        raw_json = data["candidates"][0]["content"]["parts"][0]["text"]
+        raw_text = data["candidates"][0]["content"]["parts"][0]["text"].strip()
+        if raw_text.startswith("```"):
+            lines = raw_text.splitlines()
+            if lines[0].startswith("```"):
+                lines = lines[1:]
+            if lines and lines[-1].startswith("```"):
+                lines = lines[:-1]
+            raw_text = "\n".join(lines).strip()
 
         return LLMResult(
-            raw_json=raw_json,
+            raw_json=raw_text,
             provider="gemini",
             model=self.model,
             latency_ms=round(elapsed_ms, 2),
@@ -100,10 +107,17 @@ class GeminiProvider(LLMProvider):
             data = resp.json()
 
         elapsed_ms = (time.monotonic() - start) * 1000
-        raw_json = data["candidates"][0]["content"]["parts"][0]["text"]
+        raw_text = data["candidates"][0]["content"]["parts"][0]["text"].strip()
+        if raw_text.startswith("```"):
+            lines = raw_text.splitlines()
+            if lines[0].startswith("```"):
+                lines = lines[1:]
+            if lines and lines[-1].startswith("```"):
+                lines = lines[:-1]
+            raw_text = "\n".join(lines).strip()
 
         return LLMResult(
-            raw_json=raw_json,
+            raw_json=raw_text,
             provider="gemini",
             model=self.model,
             latency_ms=round(elapsed_ms, 2),
