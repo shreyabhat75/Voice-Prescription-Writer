@@ -62,7 +62,10 @@ export function useDrugSearch(query: string): { results: string[]; loading: bool
         });
         if (res.ok) {
           const data = await res.json();
-          setResults(Array.isArray(data) ? data.slice(0, 8) : fuzzyMatch(q, FALLBACK_DRUGS));
+          const names: string[] = Array.isArray(data)
+            ? data.map((d: any) => (typeof d === 'string' ? d : d.canonical_name || d.name || String(d)))
+            : fuzzyMatch(q, FALLBACK_DRUGS);
+          setResults(names.slice(0, 8));
         } else {
           setResults(fuzzyMatch(q, FALLBACK_DRUGS));
         }

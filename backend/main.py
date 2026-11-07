@@ -94,6 +94,15 @@ async def health_check():
     }
 
 
+@app.get("/api/medicines/search", tags=["Medicines"])
+@app.get("/medicines/search", tags=["Medicines"])
+def search_medicines_endpoint(q: str = "", limit: int = 10):
+    """Sub-millisecond medicine search endpoint for frontend drug autocomplete."""
+    from backend.services.medicines.alias_matcher import search_medicines
+    entries = search_medicines(q, limit=limit)
+    return [e["canonical_name"] for e in entries if e.get("canonical_name")]
+
+
 @app.post("/api/transcribe", tags=["Transcription"])
 async def direct_transcribe(
     request: Request,
