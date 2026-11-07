@@ -309,7 +309,9 @@ class TestElevenRequiredEvaluationCases:
         assert "CREATE TABLE IF NOT EXISTS patients" in pg_sql
         assert "JSONB" in pg_sql
 
-        pg_url = os.environ.get("DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/voice_prescriptions")
+        from backend.config import get_settings
+        settings = get_settings()
+        pg_url = settings.DATABASE_URL if is_postgres_url(settings.DATABASE_URL) else os.environ.get("DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/voice_prescriptions")
         if not is_postgres_url(pg_url):
             pg_url = "postgresql://postgres:postgres@localhost:5432/voice_prescriptions"
 

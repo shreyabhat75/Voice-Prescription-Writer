@@ -7,6 +7,7 @@ Strict database engine mode: If PostgreSQL is configured, does not silently fall
 from __future__ import annotations
 
 import asyncio
+from datetime import datetime
 import itertools
 import json
 import logging
@@ -112,6 +113,14 @@ class AsyncConnection:
         cur = self._conn.execute(sql, params)
         return AsyncCursor(cur)
 
+    async def fetch_all(self, sql: str, params: Any = ()) -> list[Any]:
+        cur = self.execute(sql, params)
+        return await cur.fetchall()
+
+    async def fetch_one(self, sql: str, params: Any = ()) -> Any:
+        cur = self.execute(sql, params)
+        return await cur.fetchone()
+
     async def executescript(self, sql: str) -> None:
         self._conn.executescript(sql)
 
@@ -166,15 +175,33 @@ class AsyncPgConnection:
 
     async def execute(self, sql: str, params: Any = ()) -> AsyncPgCursor:
         pg_sql = _convert_qmarks_to_dollars(sql)
-        args = list(params) if isinstance(params, (tuple, list)) else []
+        raw_args = list(params) if isinstance(params, (tuple, list)) else []
+        clean_args = []
+        for arg in raw_args:
+            if isinstance(arg, str) and len(arg) >= 19 and ("T" in arg or ("-" in arg and ":" in arg)):
+                try:
+                    dt = datetime.fromisoformat(arg)
+                    clean_args.append(dt)
+                    continue
+                except ValueError:
+                    pass
+            clean_args.append(arg)
 
         # If query is a SELECT, fetch rows; otherwise execute
         if re.match(r"^\s*(?:SELECT|WITH)\b", pg_sql, re.I):
-            records = await self._conn.fetch(pg_sql, *args)
+            records = await self._conn.fetch(pg_sql, *clean_args)
             return AsyncPgCursor(records)
         else:
-            await self._conn.execute(pg_sql, *args)
+            await self._conn.execute(pg_sql, *clean_args)
             return AsyncPgCursor([])
+
+    async def fetch_all(self, sql: str, params: Any = ()) -> list[Any]:
+        cur = await self.execute(sql, params)
+        return await cur.fetchall()
+
+    async def fetch_one(self, sql: str, params: Any = ()) -> Any:
+        cur = await self.execute(sql, params)
+        return await cur.fetchone()
 
     async def executescript(self, sql: str) -> None:
         await self._conn.execute(sql)
