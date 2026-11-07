@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   History, FileText, ArrowRight, Search, Trash2,
@@ -54,7 +54,11 @@ export const PrescriptionHistory: React.FC = () => {
   const toggleSelect = (id: string) => {
     setSelected((prev) => {
       const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
       return next;
     });
   };
@@ -77,7 +81,7 @@ export const PrescriptionHistory: React.FC = () => {
       await apiClient.deletePrescription(id);
       setPrescriptions((prev) => prev.filter((p) => p.id !== id));
       setSelected((prev) => { const n = new Set(prev); n.delete(id); return n; });
-    } catch (err) {
+    } catch {
       alert('Failed to delete. Please try again.');
     }
   };

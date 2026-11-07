@@ -1,5 +1,5 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
-import { Pill, Plus, Trash2, Check, X, ShieldAlert } from 'lucide-react';
+import { Pill, Plus, Trash2, Check, ShieldAlert } from 'lucide-react';
 import { MedicineItem, SourceEvidence } from '../../types';
 import { EvidenceField } from './EvidenceField';
 import { DrugAutocomplete } from './DrugAutocomplete';
@@ -80,7 +80,7 @@ export const MedicineTable: React.FC<MedicineTableProps> = ({
   // Sync drug name input values when medicines change externally
   useEffect(() => {
     setDrugNameValues(medicines.map((m) => String(m.name.value ?? '')));
-  }, [medicines.length]);
+  }, [medicines]);
 
   const update = useCallback((index: number, med: MedicineItem) => {
     const copy = [...medicines];

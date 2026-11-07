@@ -120,7 +120,7 @@ export const PrescriptionReview: React.FC = () => {
     setIsDeleting(true);
     try {
       await apiClient.deletePrescription(prescription.id);
-      navigate('/', { replace: true });
+      navigate('/dashboard', { replace: true });
     } catch (err: any) {
       setError(err.response?.data?.detail || err.message || 'Failed to delete prescription.');
       setIsDeleting(false);
@@ -135,7 +135,7 @@ export const PrescriptionReview: React.FC = () => {
         <AlertCircle className="w-12 h-12 text-red-400 mx-auto" />
         <h2 className="text-lg font-bold text-slate-800">Prescription Error</h2>
         <p className="text-sm text-slate-600">{error || 'Prescription not found.'}</p>
-        <button type="button" onClick={() => navigate('/')} className="inline-flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white rounded-lg text-xs font-semibold cursor-pointer">
+        <button type="button" onClick={() => navigate('/dashboard')} className="inline-flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white rounded-lg text-xs font-semibold cursor-pointer">
           <ArrowLeft className="w-4 h-4" /> Return to Dashboard
         </button>
       </div>
@@ -154,7 +154,7 @@ export const PrescriptionReview: React.FC = () => {
         <div className="flex items-center gap-3 min-w-0">
           <button
             type="button"
-            onClick={() => navigate('/')}
+            onClick={() => navigate('/dashboard')}
             className="p-2 text-slate-400 hover:text-slate-700 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer flex-shrink-0"
           >
             <ArrowLeft className="w-4 h-4" />
@@ -300,7 +300,7 @@ export const PrescriptionReview: React.FC = () => {
       {/* Confirmation modal */}
       <ConfirmationDialog
         isOpen={isConfirmOpen}
-        onClose={() => setIsConfirmOpen(false)}
+        onDismiss={() => setIsConfirmOpen(false)}
         onConfirm={handleConfirm}
         patientName={prescription.patient.name.value}
         medicineCount={prescription.medicines.length}
