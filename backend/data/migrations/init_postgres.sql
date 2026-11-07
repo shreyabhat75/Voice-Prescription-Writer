@@ -11,6 +11,16 @@ CREATE TABLE IF NOT EXISTS patients (
     created_at      TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at      TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Schema upgrades for existing patients table
+ALTER TABLE patients ADD COLUMN IF NOT EXISTS patient_id VARCHAR(64);
+ALTER TABLE patients ADD COLUMN IF NOT EXISTS name VARCHAR(255);
+ALTER TABLE patients ADD COLUMN IF NOT EXISTS age INTEGER;
+ALTER TABLE patients ADD COLUMN IF NOT EXISTS gender VARCHAR(50);
+ALTER TABLE patients ADD COLUMN IF NOT EXISTS mobile_number VARCHAR(50);
+ALTER TABLE patients ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP;
+ALTER TABLE patients ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP;
+
 CREATE INDEX IF NOT EXISTS idx_patients_pid ON patients(patient_id);
 CREATE INDEX IF NOT EXISTS idx_patients_mobile ON patients(mobile_number);
 
@@ -35,6 +45,18 @@ CREATE TABLE IF NOT EXISTS prescriptions (
     confirmed_at    TIMESTAMPTZ,
     verified_at     TIMESTAMPTZ
 );
+
+-- Progressive schema upgrades for existing prescriptions table
+ALTER TABLE prescriptions ADD COLUMN IF NOT EXISTS patient_id VARCHAR(64);
+ALTER TABLE prescriptions ADD COLUMN IF NOT EXISTS doctor_id VARCHAR(64);
+ALTER TABLE prescriptions ADD COLUMN IF NOT EXISTS doctor_name VARCHAR(150);
+ALTER TABLE prescriptions ADD COLUMN IF NOT EXISTS edited_transcript TEXT;
+ALTER TABLE prescriptions ADD COLUMN IF NOT EXISTS pdf_path TEXT;
+ALTER TABLE prescriptions ADD COLUMN IF NOT EXISTS validation_json JSONB NOT NULL DEFAULT '[]'::jsonb;
+ALTER TABLE prescriptions ADD COLUMN IF NOT EXISTS clarification_json JSONB NOT NULL DEFAULT '[]'::jsonb;
+ALTER TABLE prescriptions ADD COLUMN IF NOT EXISTS confirmed_at TIMESTAMPTZ;
+ALTER TABLE prescriptions ADD COLUMN IF NOT EXISTS verified_at TIMESTAMPTZ;
+
 CREATE INDEX IF NOT EXISTS idx_prescriptions_patient ON prescriptions(patient_id);
 CREATE INDEX IF NOT EXISTS idx_prescriptions_doctor ON prescriptions(doctor_name);
 CREATE INDEX IF NOT EXISTS idx_prescriptions_status_date ON prescriptions(status, updated_at DESC);
@@ -72,6 +94,7 @@ CREATE TABLE IF NOT EXISTS transcripts (
     word_timestamps JSONB,
     created_at      TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
+ALTER TABLE transcripts ADD COLUMN IF NOT EXISTS word_timestamps JSONB;
 CREATE INDEX IF NOT EXISTS idx_transcripts_rx ON transcripts(prescription_id);
 
 CREATE TABLE IF NOT EXISTS prescription_versions (
@@ -139,6 +162,8 @@ CREATE TABLE IF NOT EXISTS patient_audit_logs (
     ip_address      VARCHAR(50),
     created_at      TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
+ALTER TABLE patient_audit_logs ADD COLUMN IF NOT EXISTS actor_id VARCHAR(100) DEFAULT 'dr_ananya_rao';
+ALTER TABLE patient_audit_logs ADD COLUMN IF NOT EXISTS actor_role VARCHAR(50) DEFAULT 'doctor';
 CREATE INDEX IF NOT EXISTS idx_audit_prescription ON patient_audit_logs(prescription_id);
 CREATE INDEX IF NOT EXISTS idx_audit_patient ON patient_audit_logs(patient_id);
 

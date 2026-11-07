@@ -278,14 +278,37 @@ async def init_db(db_target: str | None = None) -> None:
 
         migration_sql = _load_migration_sql(is_pg=True)
         async with _pg_pool.acquire() as conn:
-            await conn.execute(migration_sql)
-            # Add doctor columns if not already present
+            # Step 1: Pre-alter existing tables before executing the full migration script,
+            # so that any indices referencing doctor_name, patient_id, etc. succeed unconditionally.
             try:
-                await conn.execute("ALTER TABLE prescriptions ADD COLUMN IF NOT EXISTS doctor_name VARCHAR(150);")
-                await conn.execute("ALTER TABLE prescriptions ADD COLUMN IF NOT EXISTS doctor_id VARCHAR(64);")
+                await conn.execute("""
+                    ALTER TABLE IF EXISTS prescriptions ADD COLUMN IF NOT EXISTS patient_id VARCHAR(64);
+                    ALTER TABLE IF EXISTS prescriptions ADD COLUMN IF NOT EXISTS doctor_id VARCHAR(64);
+                    ALTER TABLE IF EXISTS prescriptions ADD COLUMN IF NOT EXISTS doctor_name VARCHAR(150);
+                    ALTER TABLE IF EXISTS prescriptions ADD COLUMN IF NOT EXISTS edited_transcript TEXT;
+                    ALTER TABLE IF EXISTS prescriptions ADD COLUMN IF NOT EXISTS pdf_path TEXT;
+                    ALTER TABLE IF EXISTS prescriptions ADD COLUMN IF NOT EXISTS validation_json JSONB NOT NULL DEFAULT '[]'::jsonb;
+                    ALTER TABLE IF EXISTS prescriptions ADD COLUMN IF NOT EXISTS clarification_json JSONB NOT NULL DEFAULT '[]'::jsonb;
+                    ALTER TABLE IF EXISTS prescriptions ADD COLUMN IF NOT EXISTS confirmed_at TIMESTAMPTZ;
+                    ALTER TABLE IF EXISTS prescriptions ADD COLUMN IF NOT EXISTS verified_at TIMESTAMPTZ;
+                    ALTER TABLE IF EXISTS patients ADD COLUMN IF NOT EXISTS patient_id VARCHAR(64);
+                    ALTER TABLE IF EXISTS patients ADD COLUMN IF NOT EXISTS mobile_number VARCHAR(50);
+                    ALTER TABLE IF EXISTS patients ADD COLUMN IF NOT EXISTS gender VARCHAR(50);
+                    ALTER TABLE IF EXISTS patients ADD COLUMN IF NOT EXISTS age INTEGER;
+                    ALTER TABLE IF EXISTS transcripts ADD COLUMN IF NOT EXISTS word_timestamps JSONB;
+                """)
+            except Exception as e:
+                logger.warning("Postgres pre-migration table alteration notice: %s", e)
+
+            # Step 2: Run complete schema migration script
+            await conn.execute(migration_sql)
+
+            # Step 3: Ensure index on doctor_name is established
+            try:
                 await conn.execute("CREATE INDEX IF NOT EXISTS idx_prescriptions_doctor ON prescriptions(doctor_name);")
             except Exception as e:
-                logger.warning("Postgres column migration check notice: %s", e)
+                logger.warning("Postgres index verification notice: %s", e)
+
         logger.info("PostgreSQL database initialized successfully with schema migrations.")
 
     else:

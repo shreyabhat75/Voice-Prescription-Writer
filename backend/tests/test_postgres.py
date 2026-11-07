@@ -43,15 +43,18 @@ class TestPostgreSQLConfigurationAndSchema:
         assert converted_select == "SELECT * FROM prescriptions WHERE patient_id = $1 AND status = $2 ORDER BY created_at DESC"
 
     def test_load_postgres_migration_sql(self):
-        """Verify PostgreSQL migration script contains all production tables, JSONB types, and foreign keys."""
+        """Verify PostgreSQL migration script contains all production tables, JSONB types, progressive ALTER statements, and foreign keys."""
         sql = _load_migration_sql(is_pg=True)
         assert "CREATE TABLE IF NOT EXISTS patients" in sql
         assert "CREATE TABLE IF NOT EXISTS prescriptions" in sql
+        assert "ALTER TABLE prescriptions ADD COLUMN IF NOT EXISTS doctor_name" in sql
+        assert "ALTER TABLE prescriptions ADD COLUMN IF NOT EXISTS doctor_id" in sql
         assert "CREATE TABLE IF NOT EXISTS medicine_items" in sql
         assert "CREATE TABLE IF NOT EXISTS patient_audit_logs" in sql
         assert "JSONB" in sql
         assert "ON DELETE CASCADE" in sql
         assert "idx_prescriptions_patient" in sql
+        assert "idx_prescriptions_doctor" in sql
 
 
 # Helper to check if a live PostgreSQL database is reachable
