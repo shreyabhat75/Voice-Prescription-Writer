@@ -138,3 +138,4 @@ class TestNormalizerGenderIntegration:
         assert normalized.patient.sex.value == "female"
         assert normalized.patient.sex.status == "extracted"
         assert normalized.patient.sex.confidence == 0.99
+

@@ -324,10 +324,21 @@ class PrescriptionService:
             raw_tx = rx.raw_transcript or transcript
             edited_tx = rx.edited_transcript
 
-        # 1. LLM Extraction
-        llm_result = await self.llm_provider.extract_prescription(transcript)
-        extracted_data = json.loads(llm_result.raw_json)
-        raw_draft = PrescriptionDraft.model_validate(extracted_data)
+        # 1. LLM Extraction with resilient local fallback
+        try:
+            llm_result = await self.llm_provider.extract_prescription(transcript)
+            extracted_data = json.loads(llm_result.raw_json)
+            raw_draft = PrescriptionDraft.model_validate(extracted_data)
+        except Exception as e:
+            logger.warning(
+                "Primary LLM structuring failed (%s). Falling back to resilient local ClinicalExtractor.",
+                e,
+            )
+            from backend.services.llm.clinical_extractor import ClinicalExtractor
+
+            extractor = ClinicalExtractor()
+            extracted_data = extractor.extract(transcript)
+            raw_draft = PrescriptionDraft.model_validate(extracted_data)
 
         # 2. Shorthand Normalization & AI Demographic/Gender Detection
         normalized_draft = await self.normalizer.normalize_async(raw_draft)
