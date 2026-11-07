@@ -1,4 +1,27 @@
 services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: voice_rx
+      POSTGRES_PASSWORD: voice_rx
+      POSTGRES_DB: voice_prescriptions
+    volumes:
+      - voice_rx_pg:/var/lib/postgresql/data
+    expose:
+      - "5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U voice_rx -d voice_prescriptions"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+
   backend:
     build:
       context: .
@@ -12,19 +35,20 @@ services:
       APP_DEBUG: "false"
       STT_PROVIDER: ${STT_PROVIDER:-mock}
       LLM_PROVIDER: ${LLM_PROVIDER:-mock}
-      DATABASE_PATH: /app/data/prescriptions.db
-      DATABASE_URL: sqlite:////app/data/prescriptions.db
+      DATABASE_URL: postgresql://voice_rx:voice_rx@db:5432/voice_prescriptions
       UPLOAD_DIR: /app/uploads
       PDF_OUTPUT_DIR: /app/pdf_output
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost}
       APP_HOST: 0.0.0.0
       APP_PORT: "8000"
     volumes:
-      - voice_rx_db:/app/data
       - voice_rx_uploads:/app/uploads
       - voice_rx_pdf:/app/pdf_output
     expose:
       - "8000"
+    depends_on:
+      db:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 30s
@@ -59,6 +83,6 @@ services:
         max-file: "5"
 
 volumes:
-  voice_rx_db:
+  voice_rx_pg:
   voice_rx_uploads:
   voice_rx_pdf:
