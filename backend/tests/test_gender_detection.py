@@ -76,6 +76,26 @@ class TestGenderDetectorService:
         assert res.gender == "female"
         assert res.confidence >= 0.85
 
+    async def test_detect_gender_shreya_bhatt(self):
+        res = await GenderDetector.detect_gender("Shreya Bhatt")
+        assert res.gender == "female"
+        assert res.confidence >= 0.90
+        assert "Shreya" in res.reasoning or "female" in res.reasoning.lower()
+
+    async def test_detect_gender_evaluates_first_name_not_surname(self):
+        """Verify surname (e.g. Rao) does not misclassify female given names (Ananya, Avanti, Kavya)."""
+        ananya = await GenderDetector.detect_gender("Ananya Rao")
+        assert ananya.gender == "female"
+        assert ananya.confidence >= 0.90
+
+        avanti = await GenderDetector.detect_gender("Avanti Rao")
+        assert avanti.gender == "female"
+        assert avanti.confidence >= 0.90
+
+        kavya = await GenderDetector.detect_gender("Kavya Rao")
+        assert kavya.gender == "female"
+        assert kavya.confidence >= 0.90
+
     async def test_detect_gender_empty_name(self):
         res = await GenderDetector.detect_gender("")
         assert res.gender == "unknown"

@@ -5,6 +5,7 @@ import { Check, X } from 'lucide-react';
 const STATUS_DOT: Record<FieldStatus, string> = {
   extracted:       'bg-emerald-500',
   doctor_corrected:'bg-blue-500',
+  inferred:        'bg-indigo-500',
   unclear:         'bg-amber-500',
   needs_review:    'bg-amber-400',
   not_mentioned:   'bg-slate-300',

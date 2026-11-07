@@ -60,9 +60,16 @@ export const PatientInfoCard: React.FC<PatientInfoCardProps> = ({
         </div>
 
         <div>
-          <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
-            Sex
-            <span className="ml-1 text-[9px] text-slate-400 normal-case font-normal">(never inferred)</span>
+          <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1.5 flex items-center justify-between">
+            <span>Sex</span>
+            {patient.sex?.status === 'inferred' && (
+              <span
+                className="text-[9px] font-semibold text-indigo-600 bg-indigo-50 border border-indigo-200 px-1.5 py-0.2 rounded"
+                title={patient.sex.reasoning || 'Auto-detected via AI onomastic reasoning'}
+              >
+                AI Inferred
+              </span>
+            )}
           </label>
           <EvidenceField
             evidence={patient.sex}
@@ -80,6 +87,7 @@ export const PatientInfoCard: React.FC<PatientInfoCardProps> = ({
       <div className="flex items-center gap-4 mt-4 pt-3 border-t border-slate-50">
         {[
           { dot: 'bg-emerald-500', label: 'Extracted' },
+          { dot: 'bg-indigo-500',  label: 'AI Inferred' },
           { dot: 'bg-amber-400',   label: 'Needs review' },
           { dot: 'bg-blue-500',    label: 'Doctor edited' },
           { dot: 'bg-slate-300',   label: 'Not mentioned' },

@@ -1,10 +1,11 @@
-export type FieldStatus = 'extracted' | 'not_mentioned' | 'unclear' | 'needs_review' | 'doctor_corrected';
+export type FieldStatus = 'extracted' | 'not_mentioned' | 'unclear' | 'needs_review' | 'doctor_corrected' | 'inferred';
 
 export interface SourceEvidence {
   value: any;
   source_text: string | null;
   status: FieldStatus;
   confidence: number | null;
+  reasoning?: string | null;
 }
 
 export interface MedicineItem {
