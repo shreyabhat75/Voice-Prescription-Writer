@@ -5,9 +5,7 @@ import {
   Bell,
   Wifi,
   WifiOff,
-  User,
   LogOut,
-  ExternalLink,
   ChevronDown,
   LayoutDashboard,
   Mic,
@@ -145,22 +143,6 @@ export const AppLayout: React.FC = () => {
                   </div>
 
                   <div className="py-1">
-                    <button
-                      type="button"
-                      onClick={() => { setProfileMenuOpen(false); navigate('/'); }}
-                      className="w-full px-4 py-2 text-left text-xs text-slate-700 hover:bg-slate-50 flex items-center gap-2 cursor-pointer"
-                    >
-                      <ExternalLink className="w-3.5 h-3.5 text-slate-400" />
-                      Product Overview / Landing
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => { setProfileMenuOpen(false); navigate('/login'); }}
-                      className="w-full px-4 py-2 text-left text-xs text-slate-700 hover:bg-slate-50 flex items-center gap-2 cursor-pointer"
-                    >
-                      <User className="w-3.5 h-3.5 text-slate-400" />
-                      Switch Doctor Station
-                    </button>
                     <button
                       type="button"
                       onClick={handleLogout}
