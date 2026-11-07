@@ -127,11 +127,13 @@ def main():
     try:
         while True:
             if backend_proc and backend_proc.poll() is not None:
-                print("[WARN] Backend server stopped unexpectedly!")
-                break
+                print("[WARN] Backend server exited. Auto-restarting in 2s...")
+                time.sleep(2)
+                backend_proc = start_backend()
             if frontend_proc and frontend_proc.poll() is not None:
-                print("[WARN] Frontend server stopped unexpectedly!")
-                break
+                print("[WARN] Frontend server exited. Auto-restarting in 2s...")
+                time.sleep(2)
+                frontend_proc = start_frontend()
             time.sleep(1)
     except KeyboardInterrupt:
         print("\n\n[SHUTDOWN] Stopping all servers...")
