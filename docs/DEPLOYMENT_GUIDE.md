@@ -1,19 +1,20 @@
 # Deployment Guide
 
-This is how to run Voice Prescription Writer on a real machine (a hospital PC/server on the LAN, or a small cloud VM) without installing Python or Node on that machine. Docker builds the backend image and the frontend/nginx image from the Dockerfiles in this repo, then Compose starts both of them together.
+This is how to run Voice Prescription Writer on a real machine (a hospital PC/server on the LAN, or a small cloud VM) without installing Python or Node on that machine. Docker builds the backend image and the frontend/nginx image from the Dockerfiles in this repo, then Compose starts Postgres, the backend, and nginx together.
 
 If you only want to try it on your laptop, `docker compose up --build` with the regular `docker-compose.yml` is enough. This guide is for the production-style stack.
 
 ## What gets started
 
-There are two services:
+There are three services:
 
+- **db** — PostgreSQL. Prescriptions are stored here so they are not lost when the backend container restarts.
 - **backend** — FastAPI. It stays on the Docker network at port 8000. That port is not published on the host, so you should not expect http://localhost:8000 to work.
 - **frontend** — nginx. This is the process bound to **port 80** on the host. It serves the React app and proxies `/api`, `/health`, `/docs` and `/ws` through to the backend.
 
 So the URL to open is always **http://localhost** (or `http://<server-ip>` if you are on another computer on the same network).
 
-Prescription data, uploaded audio and generated PDFs are stored in Docker volumes (`voice_rx_db`, `voice_rx_uploads`, `voice_rx_pdf`). Stopping the stack does not delete that data unless you pass `-v`.
+Postgres data, uploaded audio and generated PDFs are stored in Docker volumes (`voice_rx_pg`, `voice_rx_uploads`, `voice_rx_pdf`). Stopping the stack does not delete that data unless you pass `-v`.
 
 ## The two compose files
 
@@ -119,9 +120,11 @@ GitHub Actions CI already runs with mock STT/LLM, so it does not need those secr
 
 ## Database
 
-Prod compose uses SQLite inside the `voice_rx_db` volume. That is intentional: a single hospital machine should not need to install PostgreSQL just to run this.
+Docker Compose and Render use **PostgreSQL**, not SQLite. That is so prescriptions survive a container restart. Compose starts a `db` service (`postgres:16-alpine`) and sets `DATABASE_URL` on the backend. Render creates a Postgres instance (`voice-rx-db`) and injects the same kind of URL.
 
-The backend can use Postgres if `DATABASE_URL` starts with `postgresql://` and `asyncpg` is installed. The compose file does not switch to that automatically, because the default image is set up for SQLite. Leave it unless someone has actually provisioned Postgres.
+`python start.py` without Docker can still use SQLite from `.env.example`. Pytest in GitHub Actions also stays on SQLite so CI does not need a cloud database.
+
+Do not put a `sqlite://` URL in Docker or Render env vars. If `DATABASE_URL` starts with `postgresql://`, the app will not fall back to SQLite.
 
 ## Render (optional public demo)
 
@@ -129,7 +132,7 @@ Render does not run `docker-compose.yml` as one stack. It builds the same Docker
 
 Local compose is unchanged. On Render, the frontend container reads `PORT` and `BACKEND_UPSTREAM` and points nginx at the public backend URL. Free web services cannot talk over Render’s private network, which is why that public URL is used.
 
-The site will sleep after about 15 minutes with no traffic. A ping to the frontend `/health` (and the backend `/health` if you want both warm) can wake it. SQLite files on Render free are not durable; a sleep or redeploy can wipe saved prescriptions.
+The site will sleep after about 15 minutes with no traffic. A ping to the frontend `/health` (and the backend `/health` if you want both warm) can wake it. Prescriptions live in Render Postgres, so a web-service sleep should not wipe the database. The free Postgres plan can still expire later; if Render asks you to upgrade the database, that is separate from the web services.
 
 ## Quick check that it worked
 

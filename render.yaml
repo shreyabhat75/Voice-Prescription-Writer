@@ -1,3 +1,10 @@
+databases:
+  - name: voice-rx-db
+    plan: free
+    databaseName: voice_prescriptions
+    user: voice_rx
+    ipAllowList: []
+
 services:
   - type: web
     name: voice-rx-backend
@@ -14,6 +21,10 @@ services:
         value: /app
       - key: APP_ENV
         value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: voice-rx-db
+          property: connectionString
 
   - type: web
     name: voice-rx-frontend
