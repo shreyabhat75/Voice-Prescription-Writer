@@ -7,7 +7,6 @@ import {
   ArrowRight,
   ArrowLeft,
   Lock,
-  ExternalLink,
 } from 'lucide-react';
 import { DoctorStation } from '../components/auth/DoctorStation';
 import { AdminBlock } from '../components/admin/AdminBlock';
@@ -131,16 +130,8 @@ export const LoginPage: React.FC = () => {
 
       {/* Footer */}
       <footer className="py-6 border-t border-slate-200 bg-white text-center text-xs text-slate-500">
-        <div className="max-w-7xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-2">
+        <div className="max-w-7xl mx-auto px-6 flex items-center justify-center gap-2">
           <span>Voice Rx Outpatient Scribing Station &bull; CDSCO &amp; NABH Compliant</span>
-          <a
-            href="https://github.com/shreyabhat75/Voice-Prescription-Writer"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 text-slate-500 hover:text-slate-800"
-          >
-            GitHub Repository <ExternalLink className="w-3 h-3" />
-          </a>
         </div>
       </footer>
     </div>
