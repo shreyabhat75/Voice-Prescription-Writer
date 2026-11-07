@@ -28,6 +28,31 @@ class PrescriptionNormalizer:
 
         return normalized_draft
 
+    async def normalize_async(
+        self, draft: PrescriptionDraft, auto_detect_gender: bool = True
+    ) -> PrescriptionDraft:
+        """Apply shorthand normalization and automatically detect gender using LLM onomastic reasoning."""
+        normalized = self.normalize(draft)
+        if auto_detect_gender:
+            if (
+                normalized.patient.name
+                and normalized.patient.name.value
+                and (
+                    not normalized.patient.sex.value
+                    or normalized.patient.sex.status in ("not_mentioned", "unclear")
+                )
+            ):
+                from backend.services.demographics.gender_detector import GenderDetector
+
+                gender_result = await GenderDetector.detect_gender(str(normalized.patient.name.value))
+                if gender_result.gender in ("male", "female", "other"):
+                    normalized.patient.sex.value = gender_result.gender
+                    normalized.patient.sex.status = "inferred"
+                    normalized.patient.sex.confidence = gender_result.confidence
+                    normalized.patient.sex.reasoning = gender_result.reasoning
+                    normalized.patient.inferred_gender = gender_result
+        return normalized
+
     def _normalize_medicine(self, med: MedicineItem) -> None:
         # 1. Normalize Frequency
         freq_raw = str(med.frequency.value) if med.frequency.value is not None else None

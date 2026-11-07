@@ -10,6 +10,8 @@ from typing import Any, Literal, Optional
 
 from pydantic import BaseModel, Field
 
+from backend.models.patient import GenderDetectionResult
+
 
 # ---------------------------------------------------------------------------
 # Source evidence wrapper
@@ -26,8 +28,10 @@ class SourceEvidence(BaseModel):
         "unclear",
         "needs_review",
         "doctor_corrected",
+        "inferred",
     ] = "not_mentioned"
     confidence: Optional[float] = None
+    reasoning: Optional[str] = None
 
 
 # ---------------------------------------------------------------------------
@@ -61,6 +65,7 @@ class PatientInfo(BaseModel):
     name: SourceEvidence
     age: SourceEvidence
     sex: SourceEvidence
+    inferred_gender: Optional[GenderDetectionResult] = None
 
 
 class ClinicalInfo(BaseModel):

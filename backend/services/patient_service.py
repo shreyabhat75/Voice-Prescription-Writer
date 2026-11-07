@@ -9,7 +9,13 @@ from datetime import datetime
 from typing import Any, Optional
 
 from backend.database import get_db
-from backend.models.patient import PatientAuditLogEntry, PatientCreateRequest, PatientRecord
+from backend.models.patient import (
+    GenderDetectionResult,
+    PatientAuditLogEntry,
+    PatientCreateRequest,
+    PatientRecord,
+)
+from backend.services.demographics.gender_detector import GenderDetector
 
 logger = logging.getLogger(__name__)
 
@@ -29,6 +35,10 @@ class PatientService:
             count = row["count"] if row else 0
             seq = count + 1
             return f"PID-{year}-{seq:04d}"
+
+    async def detect_gender_from_name(self, name: str) -> GenderDetectionResult:
+        """Detect patient gender based on name using LLM reasoning and Pydantic validation."""
+        return await GenderDetector.detect_gender(name)
 
     async def register_patient(
         self,

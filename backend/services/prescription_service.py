@@ -329,8 +329,8 @@ class PrescriptionService:
         extracted_data = json.loads(llm_result.raw_json)
         raw_draft = PrescriptionDraft.model_validate(extracted_data)
 
-        # 2. Shorthand Normalization
-        normalized_draft = self.normalizer.normalize(raw_draft)
+        # 2. Shorthand Normalization & AI Demographic/Gender Detection
+        normalized_draft = await self.normalizer.normalize_async(raw_draft)
 
         # 3. Validation Pipeline (Schema + Source Grounding + Completeness)
         val_issues = self.validator.run_validation(normalized_draft, raw_transcript=transcript)

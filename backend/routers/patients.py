@@ -6,13 +6,28 @@ import logging
 from typing import Optional
 from fastapi import APIRouter, HTTPException, Query, Request, status
 
-from backend.models.patient import PatientAuditLogEntry, PatientCreateRequest, PatientRecord
+from backend.models.patient import (
+    GenderDetectionRequest,
+    GenderDetectionResult,
+    PatientAuditLogEntry,
+    PatientCreateRequest,
+    PatientRecord,
+)
 from backend.services.patient_service import PatientService
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/patients", tags=["Patient Records"])
 patient_svc = PatientService()
+
+
+@router.post(
+    "/detect-gender",
+    response_model=GenderDetectionResult,
+    summary="Automatically detect patient gender from name using onomastic LLM reasoning",
+)
+async def detect_gender_from_name(payload: GenderDetectionRequest):
+    return await patient_svc.detect_gender_from_name(payload.name)
 
 
 @router.get(

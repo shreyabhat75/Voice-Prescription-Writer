@@ -2,8 +2,32 @@
 
 from __future__ import annotations
 
-from typing import Optional
+from typing import Literal, Optional
 from pydantic import BaseModel, Field
+
+
+class GenderDetectionRequest(BaseModel):
+    """Payload to detect patient gender using onomastic/linguistic LLM reasoning."""
+
+    name: str = Field(..., min_length=1, description="Patient's full or first name")
+
+
+class GenderDetectionResult(BaseModel):
+    """Pydantic model representing LLM-reasoned gender detection from patient name."""
+
+    name: str = Field(..., description="The analyzed patient name")
+    gender: Literal["male", "female", "other", "unknown"] = Field(
+        ..., description="Detected patient gender"
+    )
+    confidence: float = Field(
+        default=0.9, ge=0.0, le=1.0, description="Confidence score from 0.0 to 1.0"
+    )
+    reasoning: str = Field(
+        ..., description="Linguistic and cultural reasoning explaining why this gender was detected"
+    )
+    cultural_context: Optional[str] = Field(
+        default="Indian", description="Onomastic or cultural context used for detection"
+    )
 
 
 class PatientRecord(BaseModel):
