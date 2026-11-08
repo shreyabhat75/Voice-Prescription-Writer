@@ -217,57 +217,6 @@ export const LandingPage: React.FC = () => {
         </div>
       </section>
 
-      {/* Verification Statistics Strip */}
-      <section className="py-10 border-b border-slate-200 bg-slate-50">
-        <div className="max-w-6xl mx-auto px-6">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4">
-            <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-xs flex flex-col justify-between">
-              <div>
-                <span className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-mono tabular-nums">100.0%</span>
-                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 mt-1">Extraction Accuracy</h4>
-                <p className="text-[11px] text-slate-600 mt-1 leading-snug">7 of 7 reference outpatient cases pass with exact entity structuring.</p>
-              </div>
-              <div className="text-[10px] font-semibold text-emerald-800 mt-3 pt-2 border-t border-slate-100 flex items-center gap-1">
-                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> Benchmark Verified
-              </div>
-            </div>
-
-            <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-xs flex flex-col justify-between">
-              <div>
-                <span className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-mono tabular-nums">0.0%</span>
-                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 mt-1">Silent Inference</h4>
-                <p className="text-[11px] text-slate-600 mt-1 leading-snug">Zero unstated diagnoses or omitted durations fabricated or guessed.</p>
-              </div>
-              <div className="text-[10px] font-semibold text-emerald-800 mt-3 pt-2 border-t border-slate-100 flex items-center gap-1">
-                <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" /> Non-Inference Strict
-              </div>
-            </div>
-
-            <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-xs flex flex-col justify-between">
-              <div>
-                <span className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-mono tabular-nums">&lt; 850 ms</span>
-                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 mt-1">Pipeline Latency</h4>
-                <p className="text-[11px] text-slate-600 mt-1 leading-snug">Turnaround time from audio stream buffer to validated JSON schema.</p>
-              </div>
-              <div className="text-[10px] font-semibold text-blue-700 mt-3 pt-2 border-t border-slate-100 flex items-center gap-1">
-                <Clock className="w-3.5 h-3.5 text-blue-600" /> Low-Latency Stream
-              </div>
-            </div>
-
-            <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-xs flex flex-col justify-between">
-              <div>
-                <span className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-mono tabular-nums">100.0%</span>
-                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 mt-1">Gate Enforcement</h4>
-                <p className="text-[11px] text-slate-600 mt-1 leading-snug">HTTP 403 block enforced on unconfirmed drafts prior to doctor sign-off.</p>
-              </div>
-              <div className="text-[10px] font-semibold text-slate-700 mt-3 pt-2 border-t border-slate-100 flex items-center gap-1">
-                <Lock className="w-3.5 h-3.5 text-slate-600" /> Mandatory Confirmation
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* Core Capabilities Section */}
       <section id="features" className="py-16 md:py-20 border-b border-slate-200 bg-white scroll-mt-20">
         <div className="max-w-6xl mx-auto px-6 space-y-12">
