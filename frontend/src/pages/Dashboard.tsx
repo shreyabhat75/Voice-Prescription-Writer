@@ -190,7 +190,7 @@ export const Dashboard: React.FC = () => {
             {[
               { label: 'STT Engine', value: health.stt_provider, ok: true },
               { label: 'LLM Engine', value: health.llm_provider, ok: true },
-              { label: 'Database', value: 'SQLite', ok: true },
+              { label: 'Database', value: 'PostgreSQL', ok: true },
             ].map((s) => (
               <div key={s.label} className="flex items-center gap-2 px-3 py-1.5 bg-emerald-50 border border-emerald-200 rounded-lg">
                 <div className="w-2 h-2 rounded-full bg-emerald-500" />
