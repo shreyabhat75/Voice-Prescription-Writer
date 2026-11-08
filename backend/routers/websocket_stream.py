@@ -71,13 +71,11 @@ async def websocket_transcribe(websocket: WebSocket, prescription_id: str):
             import websockets
 
             headers = {"Authorization": f"Token {settings.DEEPGRAM_API_KEY}"}
+            # Use non-boosted acoustic hints to prevent phantom drug insertions (e.g. Amlodipine hallucination)
             medical_keywords = [
-                "Dolo:2", "Pantoprazole:2", "Pan-D:2", "Augmentin:2", "Paracetamol:2",
-                "Azithromycin:2", "Cetirizine:2", "Combiflam:2", "Montelukast:2", "Deriphyllin:2",
-                "Ambrodil:2", "Hydrocortisone:2", "Budecort:2", "Duolin:2", "Sumatriptan:2",
-                "Amitriptyline:2", "Propranolol:2", "Ondansetron:2", "Econorm:2", "Amlodipine:2",
-                "Ecosprin:2", "Sucralfate:2", "Domperidone:2", "TDS:2", "BD:2", "OD:2", "SOS:2",
-                "stat:2", "IV:2", "nebulization:2", "tablet:2", "capsule:2", "syrup:2"
+                "tablet", "capsule", "syrup", "injection", "nebulization",
+                "TDS", "BD", "OD", "SOS", "stat", "IV", "IM",
+                "aadmele", "munche", "khali pet", "beligge", "sanje", "raatri", "dinagalu"
             ]
             kw_param = "&keywords=" + "&keywords=".join(medical_keywords)
             dg_url = (

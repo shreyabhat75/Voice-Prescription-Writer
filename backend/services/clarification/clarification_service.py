@@ -53,12 +53,13 @@ class ClarificationService:
         for idx, med in enumerate(draft.medicines):
             med_name = med.name.value or f"Medicine #{idx+1}"
 
-            # Uncertain candidate matches
+            # Uncertain candidate matches ("Do you mean this?")
             if med.candidate_matches and med.name.status in ("needs_review", "unclear"):
+                cand_list = ", ".join(f"'{c}'" for c in med.candidate_matches)
                 questions.append({
                     "field": f"medicines[{idx}].name",
                     "medicine_index": idx,
-                    "question": f"Doctor, please confirm the medication dictated as '{med.raw_phrase or med_name}' (item #{idx+1}) - candidate interpretations: {', '.join(med.candidate_matches)}.",
+                    "question": f"Doctor, did you mean {cand_list} for item #{idx+1} ('{med.raw_phrase or med_name}')?",
                     "original_value": med.name.value,
                 })
             # Unclear or ambiguous medicine name
@@ -72,6 +73,24 @@ class ClarificationService:
                     "medicine_index": idx,
                     "question": q_text,
                     "original_value": med.name.value,
+                })
+
+            # Hedged or unclear frequency (e.g. "maybe twice daily", "need to confirm")
+            if med.frequency.status in ("unclear", "needs_review") and med.frequency.source_text:
+                questions.append({
+                    "field": f"medicines[{idx}].frequency",
+                    "medicine_index": idx,
+                    "question": f"Doctor, for {med_name}, did you mean {med.frequency.value}? (dictated with uncertainty as '{med.frequency.source_text}')",
+                    "original_value": med.frequency.value,
+                })
+
+            # Conflicting timing/instruction resolution
+            if med.special_instructions and "conflict" in str(med.special_instructions).lower():
+                questions.append({
+                    "field": f"medicines[{idx}].timing",
+                    "medicine_index": idx,
+                    "question": f"Doctor, for {med_name}, conflicting instructions were dictated ('{med.special_instructions}'). Please confirm the final timing.",
+                    "original_value": med.timing.value,
                 })
 
             # Unclear or missing strength

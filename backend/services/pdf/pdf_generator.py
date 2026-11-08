@@ -214,11 +214,20 @@ class PrescriptionPDFGenerator:
         elements.append(Spacer(1, 4))
         elements.append(HRFlowable(width="100%", thickness=1.5, color=colors.HexColor("#0f766e"), spaceAfter=8))
 
+        def _clean_cell(val: Any, fallback: str = "—") -> str:
+            if val is None:
+                return fallback
+            s = str(val).strip()
+            if not s or s.lower() in ("not_mentioned", "none", "null", "undefined"):
+                return fallback
+            return s
+
         # 2. Patient Demographics & Prescription Metadata
         date_str = datetime.now().strftime("%d %b %Y, %I:%M %p")
-        p_name = prescription.patient.name.value or "Not specified"
-        p_age = f"{prescription.patient.age.value} yrs" if prescription.patient.age.value is not None else "Not specified"
-        p_sex = (prescription.patient.sex.value or "Not specified").title()
+        p_name = _clean_cell(prescription.patient.name.value, "Not specified")
+        raw_age = prescription.patient.age.value
+        p_age = f"{raw_age} yrs" if raw_age is not None and str(raw_age).lower() not in ("not_mentioned", "none") else "Not specified"
+        p_sex = _clean_cell(prescription.patient.sex.value, "Not specified").title()
         pid_display = patient_id or prescription.permanent_patient_id or "Not specified"
 
         demographics_data = [
@@ -246,13 +255,13 @@ class PrescriptionPDFGenerator:
 
         # 3. Clinical Symptoms & Diagnosis in separate sections (Strict non-inference)
         complaints = prescription.clinical.chief_complaints.value
-        if complaints:
+        if complaints and str(complaints).strip().lower() not in ("not_mentioned", "none", "null"):
             elements.append(Paragraph("Chief Complaints & Symptoms", section_heading_style))
             elements.append(Paragraph(f"{complaints}", body_style))
             elements.append(Spacer(1, 5))
 
         diagnosis = prescription.clinical.diagnosis.value
-        if diagnosis:
+        if diagnosis and str(diagnosis).strip().lower() not in ("not_mentioned", "none", "null", "not specified"):
             elements.append(Paragraph("Clinical Diagnosis", section_heading_style))
             elements.append(Paragraph(f"<b>{diagnosis}</b>", body_style))
             elements.append(Spacer(1, 5))
@@ -274,15 +283,19 @@ class PrescriptionPDFGenerator:
         med_rows = [med_headers]
 
         for idx, med in enumerate(prescription.medicines):
-            name_txt = med.name.value or "Not specified"
-            strength_txt = med.strength.value or "Not specified"
-            form_txt = (med.form.value or "tab").title()
-            dose_txt = med.dose.value or "1 unit"
-            route_raw = med.route.value or "oral"
-            route_txt = route_raw.upper() if route_raw.lower() in ("iv", "im") else route_raw.title()
-            freq_txt = med.frequency_normalized or med.frequency.value or "Not specified"
-            food_txt = med.timing.value or "Not specified"
-            duration_txt = med.duration.value or "Not specified"
+            name_txt = _clean_cell(med.name.value, f"Medicine #{idx+1}")
+            strength_txt = _clean_cell(med.strength.value, "—")
+            raw_form = _clean_cell(med.form.value, "—")
+            form_txt = raw_form.title() if raw_form != "—" else "—"
+            dose_txt = _clean_cell(med.dose.value, "—")
+            raw_route = _clean_cell(med.route.value, "—")
+            if raw_route != "—":
+                route_txt = raw_route.upper() if raw_route.lower() in ("iv", "im") else raw_route.title()
+            else:
+                route_txt = "—"
+            freq_txt = _clean_cell(med.frequency_normalized or med.frequency.value, "—")
+            food_txt = _clean_cell(med.timing.value, "—")
+            duration_txt = _clean_cell(med.duration.value, "—")
 
             row = [
                 Paragraph(str(idx + 1), table_cell_style),

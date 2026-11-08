@@ -45,12 +45,12 @@ class PrescriptionNormalizer:
                 from backend.services.demographics.gender_detector import GenderDetector
 
                 gender_result = await GenderDetector.detect_gender(str(normalized.patient.name.value))
+                normalized.patient.inferred_gender = gender_result
                 if gender_result.gender in ("male", "female", "other"):
                     normalized.patient.sex.value = gender_result.gender
                     normalized.patient.sex.status = "inferred"
                     normalized.patient.sex.confidence = gender_result.confidence
                     normalized.patient.sex.reasoning = gender_result.reasoning
-                    normalized.patient.inferred_gender = gender_result
         return normalized
 
     def _normalize_medicine(self, med: MedicineItem) -> None:

@@ -56,6 +56,14 @@ class MedicineTrie:
 _TRIE = MedicineTrie()
 
 
+# Common modifier words that must NEVER be indexed as drug identifiers
+MEDICINE_STOPWORDS = {
+    "plus", "forte", "ds", "duo", "tablet", "tablets", "capsule", "capsules",
+    "syrup", "drop", "drops", "injection", "inj", "suspension", "gel", "cream",
+    "ointment", "sachet", "dry", "solution", "oral", "tab", "cap", "syp"
+}
+
+
 def _load_dataset() -> None:
     global _MEDICINES, _ALIAS_TO_ENTRY, _TOKEN_TO_ENTRIES, _ALL_SEARCH_TERMS, _TRIE
     if _MEDICINES:
@@ -91,7 +99,7 @@ def _load_dataset() -> None:
             terms.add(a)
             _TRIE.insert(a_lower, med)
 
-        # Build token index for fast word lookup
+        # Build token index for fast word lookup (excluding generic stopwords)
         all_words = set(canonical.split())
         for b in med.get("brand_names", []):
             all_words.update(b.lower().split())
@@ -99,7 +107,7 @@ def _load_dataset() -> None:
             all_words.update(a.lower().split())
 
         for w in all_words:
-            if len(w) >= 3:
+            if len(w) >= 3 and w not in MEDICINE_STOPWORDS:
                 _TOKEN_TO_ENTRIES.setdefault(w, []).append(med)
 
     # Sort descending by length so longer phrases match before subphrases
@@ -191,8 +199,8 @@ def match_medicine(raw_phrase: str) -> dict[str, Any]:
             "default_route": entry.get("default_route"),
         }
 
-    # 2. Token Inverted Index Lookup O(tokens)
-    tokens = [t for t in clean.split() if len(t) >= 3]
+    # 2. Token Inverted Index Lookup (Only for distinctive, non-stopword tokens >= 4 chars)
+    tokens = [t for t in clean.split() if len(t) >= 4 and t not in MEDICINE_STOPWORDS]
     for t in tokens:
         if t in _TOKEN_TO_ENTRIES:
             entry = _TOKEN_TO_ENTRIES[t][0]
@@ -207,20 +215,24 @@ def match_medicine(raw_phrase: str) -> dict[str, Any]:
                 "default_route": entry.get("default_route"),
             }
 
-    # 3. Trie prefix fallback
-    prefix_entries = _TRIE.find_prefix(clean[:4]) if len(clean) >= 4 else []
-    if prefix_entries:
-        entry = prefix_entries[0]
-        candidates = list(entry.get("candidate_matches", []))
-        return {
-            "canonical_name": entry["canonical_name"],
-            "candidate_matches": candidates,
-            "status": "needs_review",
-            "confidence": 0.55,
-            "requires_confirmation": True,
-            "default_form": entry.get("default_form"),
-            "default_route": entry.get("default_route"),
-        }
+    # 3. Controlled prefix matching (Requires significant query length >= 5 and exact prefix overlap)
+    if len(clean) >= 5 and clean not in MEDICINE_STOPWORDS:
+        prefix_entries = [
+            e for e in _TRIE.find_prefix(clean)
+            if e["canonical_name"].lower().startswith(clean) or clean.startswith(e["canonical_name"].lower())
+        ]
+        if prefix_entries:
+            entry = prefix_entries[0]
+            candidates = list(entry.get("candidate_matches", []))
+            return {
+                "canonical_name": entry["canonical_name"],
+                "candidate_matches": candidates,
+                "status": "needs_review",
+                "confidence": 0.55,
+                "requires_confirmation": True,
+                "default_form": entry.get("default_form"),
+                "default_route": entry.get("default_route"),
+            }
 
     return {
         "canonical_name": None,
