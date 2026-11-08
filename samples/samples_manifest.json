@@ -1,0 +1,74 @@
+{
+  "samples": [
+    {
+      "script_id": "script_1",
+      "title": "Basic Prescription (Dolo 650 TDS, Cetirizine 10mg HS)",
+      "patient_name": "Rajesh Kumar",
+      "age": 45,
+      "sex": "male",
+      "medicines_count": 2,
+      "json_file": "script_1.json",
+      "pdf_file": "script_1.pdf"
+    },
+    {
+      "script_id": "script_2",
+      "title": "Before Breakfast (AC) and SOS Instructions (Pantoprazole, Combiflam)",
+      "patient_name": "Sunita Sharma",
+      "age": 38,
+      "sex": "female",
+      "medicines_count": 2,
+      "json_file": "script_2.json",
+      "pdf_file": "script_2.pdf"
+    },
+    {
+      "script_id": "script_3",
+      "title": "Multiple Medicines, Inhalers & Diagnostic Tests (COPD Exacerbation)",
+      "patient_name": "Mohan Lal",
+      "age": 62,
+      "sex": "male",
+      "medicines_count": 5,
+      "json_file": "script_3.json",
+      "pdf_file": "script_3.pdf"
+    },
+    {
+      "script_id": "script_4",
+      "title": "Self-Correction & Drug Removal (Sumatriptan 50mg, remove Amitriptyline)",
+      "patient_name": "Priya Menon",
+      "age": 29,
+      "sex": "female",
+      "medicines_count": 2,
+      "json_file": "script_4.json",
+      "pdf_file": "script_4.pdf"
+    },
+    {
+      "script_id": "script_5",
+      "title": "Pediatric Acute Gastroenteritis (IV Stat, ORS, Conditional Paracetamol)",
+      "patient_name": "Arjun Patel",
+      "age": 8,
+      "sex": "male",
+      "medicines_count": 4,
+      "json_file": "script_5.json",
+      "pdf_file": "script_5.pdf"
+    },
+    {
+      "script_id": "script_6",
+      "title": "Strict Non-Inference for Missing Duration (Amlodipine, Ecosprin)",
+      "patient_name": "Kamala Devi",
+      "age": 55,
+      "sex": "female",
+      "medicines_count": 2,
+      "json_file": "script_6.json",
+      "pdf_file": "script_6.pdf"
+    },
+    {
+      "script_id": "script_7",
+      "title": "Hindi-English Code-Mixed Dictation (Pantoprazole, Metformin)",
+      "patient_name": "Ravi Shankar",
+      "age": 50,
+      "sex": "male",
+      "medicines_count": 3,
+      "json_file": "script_7.json",
+      "pdf_file": "script_7.pdf"
+    }
+  ]
+}

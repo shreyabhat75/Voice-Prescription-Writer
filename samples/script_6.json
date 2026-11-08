@@ -1,0 +1,214 @@
+{
+  "id": "rx-script_6-sample",
+  "status": "confirmed",
+  "patient": {
+    "name": {
+      "value": "Kamala Devi",
+      "source_text": "Kamala Devi",
+      "status": "extracted",
+      "confidence": 0.98,
+      "reasoning": null
+    },
+    "age": {
+      "value": 55,
+      "source_text": "55 years",
+      "status": "extracted",
+      "confidence": 0.99,
+      "reasoning": null
+    },
+    "sex": {
+      "value": "female",
+      "source_text": "female",
+      "status": "extracted",
+      "confidence": 0.99,
+      "reasoning": null
+    },
+    "inferred_gender": null
+  },
+  "clinical": {
+    "chief_complaints": {
+      "value": "headache and dizziness for 2 days. BP 160 by 100",
+      "source_text": "headache and dizziness for 2 days. BP 160 by 100",
+      "status": "extracted",
+      "confidence": 0.96,
+      "reasoning": null
+    },
+    "diagnosis": {
+      "value": "hypertension",
+      "source_text": "hypertension",
+      "status": "extracted",
+      "confidence": 0.98,
+      "reasoning": null
+    },
+    "investigations": {
+      "value": null,
+      "source_text": null,
+      "status": "not_mentioned",
+      "confidence": null,
+      "reasoning": null
+    },
+    "advice": {
+      "value": "low salt diet, regular exercise, daily BP monitoring",
+      "source_text": "low salt diet, regular exercise, daily BP monitoring",
+      "status": "extracted",
+      "confidence": 0.96,
+      "reasoning": null
+    },
+    "follow_up": {
+      "value": "after 1 week with BP chart",
+      "source_text": "after 1 week with BP chart",
+      "status": "extracted",
+      "confidence": 0.95,
+      "reasoning": null
+    },
+    "unclear_phrases": []
+  },
+  "medicines": [
+    {
+      "name": {
+        "value": "Amlodipine",
+        "source_text": "Tab Amlodipine",
+        "status": "extracted",
+        "confidence": 0.99,
+        "reasoning": null
+      },
+      "raw_phrase": "Tab Amlodipine",
+      "candidate_matches": [
+        "Amlodipine 5mg",
+        "Amlodipine 2.5mg",
+        "Amlodipine 10mg"
+      ],
+      "strength": {
+        "value": "5mg",
+        "source_text": "5mg",
+        "status": "extracted",
+        "confidence": 0.99,
+        "reasoning": null
+      },
+      "form": {
+        "value": "tablet",
+        "source_text": "Tab",
+        "status": "extracted",
+        "confidence": 0.99,
+        "reasoning": null
+      },
+      "dose": {
+        "value": "1 tablet",
+        "source_text": "Tab Amlodipine 5mg",
+        "status": "extracted",
+        "confidence": 0.92,
+        "reasoning": null
+      },
+      "frequency": {
+        "value": "OD",
+        "source_text": "once daily",
+        "status": "extracted",
+        "confidence": 0.98,
+        "reasoning": null
+      },
+      "frequency_normalized": "Once Daily (OD)",
+      "timing": {
+        "value": "morning",
+        "source_text": null,
+        "status": "not_mentioned",
+        "confidence": null,
+        "reasoning": null
+      },
+      "duration": {
+        "value": null,
+        "source_text": null,
+        "status": "not_mentioned",
+        "confidence": null,
+        "reasoning": null
+      },
+      "route": {
+        "value": "oral",
+        "source_text": "Tab",
+        "status": "extracted",
+        "confidence": 0.95,
+        "reasoning": null
+      },
+      "special_instructions": null
+    },
+    {
+      "name": {
+        "value": "Ecosprin",
+        "source_text": "Tab Ecosprin",
+        "status": "extracted",
+        "confidence": 0.99,
+        "reasoning": null
+      },
+      "raw_phrase": "Tab Ecosprin",
+      "candidate_matches": [
+        "Ecosprin 75mg",
+        "Ecosprin 150mg"
+      ],
+      "strength": {
+        "value": "75mg",
+        "source_text": "75mg",
+        "status": "extracted",
+        "confidence": 0.99,
+        "reasoning": null
+      },
+      "form": {
+        "value": "tablet",
+        "source_text": "Tab",
+        "status": "extracted",
+        "confidence": 0.99,
+        "reasoning": null
+      },
+      "dose": {
+        "value": "1 tablet",
+        "source_text": "Tab Ecosprin 75mg",
+        "status": "extracted",
+        "confidence": 0.92,
+        "reasoning": null
+      },
+      "frequency": {
+        "value": "OD",
+        "source_text": "once daily",
+        "status": "extracted",
+        "confidence": 0.98,
+        "reasoning": null
+      },
+      "frequency_normalized": "Once Daily (OD)",
+      "timing": {
+        "value": "after food (PC)",
+        "source_text": "after food",
+        "status": "extracted",
+        "confidence": 0.97,
+        "reasoning": null
+      },
+      "duration": {
+        "value": null,
+        "source_text": null,
+        "status": "not_mentioned",
+        "confidence": null,
+        "reasoning": null
+      },
+      "route": {
+        "value": "oral",
+        "source_text": "Tab",
+        "status": "extracted",
+        "confidence": 0.95,
+        "reasoning": null
+      },
+      "special_instructions": null
+    }
+  ],
+  "raw_transcript": "Patient Kamala Devi age 55 years female. Chief complaints headache and dizziness for 2 days. BP 160 by 100. Diagnosis hypertension. Prescription: Tab Amlodipine 5mg once daily. Tab Ecosprin 75mg once daily after food. Advice low salt diet, regular exercise, daily BP monitoring. Follow up after 1 week with BP chart.",
+  "audio_url": null,
+  "validation_issues": [],
+  "clarification_questions": [],
+  "patient_id": null,
+  "permanent_patient_id": "PID-2026-0006",
+  "doctor_id": "dr_ananya_rao",
+  "doctor_name": "Dr. Ananya Rao, MD",
+  "edited_transcript": null,
+  "pdf_path": null,
+  "verified_at": null,
+  "created_at": "",
+  "updated_at": "",
+  "confirmed_at": "2026-11-08T18:00:00",
+  "version": 1
+}

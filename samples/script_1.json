@@ -1,0 +1,213 @@
+{
+  "id": "rx-script_1-sample",
+  "status": "confirmed",
+  "patient": {
+    "name": {
+      "value": "Rajesh Kumar",
+      "source_text": "Rajesh Kumar",
+      "status": "extracted",
+      "confidence": 0.98,
+      "reasoning": null
+    },
+    "age": {
+      "value": 45,
+      "source_text": "45 years",
+      "status": "extracted",
+      "confidence": 0.99,
+      "reasoning": null
+    },
+    "sex": {
+      "value": "male",
+      "source_text": "male",
+      "status": "extracted",
+      "confidence": 0.99,
+      "reasoning": null
+    },
+    "inferred_gender": null
+  },
+  "clinical": {
+    "chief_complaints": {
+      "value": "fever and body ache for 3 days",
+      "source_text": "fever and body ache for 3 days",
+      "status": "extracted",
+      "confidence": 0.95,
+      "reasoning": null
+    },
+    "diagnosis": {
+      "value": "viral fever",
+      "source_text": "viral fever",
+      "status": "extracted",
+      "confidence": 0.92,
+      "reasoning": null
+    },
+    "investigations": {
+      "value": null,
+      "source_text": null,
+      "status": "not_mentioned",
+      "confidence": null,
+      "reasoning": null
+    },
+    "advice": {
+      "value": "rest and plenty of fluids",
+      "source_text": "rest and plenty of fluids",
+      "status": "extracted",
+      "confidence": 0.96,
+      "reasoning": null
+    },
+    "follow_up": {
+      "value": "after 5 days",
+      "source_text": "after 5 days",
+      "status": "extracted",
+      "confidence": 0.94,
+      "reasoning": null
+    },
+    "unclear_phrases": []
+  },
+  "medicines": [
+    {
+      "name": {
+        "value": "Dolo",
+        "source_text": "Tab Dolo",
+        "status": "extracted",
+        "confidence": 0.98,
+        "reasoning": null
+      },
+      "raw_phrase": "Tab Dolo",
+      "candidate_matches": [
+        "Dolo 650",
+        "Dolo 500"
+      ],
+      "strength": {
+        "value": "650mg",
+        "source_text": "650",
+        "status": "extracted",
+        "confidence": 0.97,
+        "reasoning": null
+      },
+      "form": {
+        "value": "tablet",
+        "source_text": "Tab",
+        "status": "extracted",
+        "confidence": 0.99,
+        "reasoning": null
+      },
+      "dose": {
+        "value": "1 tablet",
+        "source_text": "one tablet",
+        "status": "extracted",
+        "confidence": 0.95,
+        "reasoning": null
+      },
+      "frequency": {
+        "value": "TDS",
+        "source_text": "three times a day",
+        "status": "extracted",
+        "confidence": 0.96,
+        "reasoning": null
+      },
+      "frequency_normalized": "Three Times Daily (TDS)",
+      "timing": {
+        "value": "after food (PC)",
+        "source_text": null,
+        "status": "not_mentioned",
+        "confidence": null,
+        "reasoning": null
+      },
+      "duration": {
+        "value": "5 days",
+        "source_text": "for 5 days",
+        "status": "extracted",
+        "confidence": 0.95,
+        "reasoning": null
+      },
+      "route": {
+        "value": "oral",
+        "source_text": "Tab",
+        "status": "extracted",
+        "confidence": 0.95,
+        "reasoning": null
+      },
+      "special_instructions": null
+    },
+    {
+      "name": {
+        "value": "Cetirizine",
+        "source_text": "Tab Cetirizine",
+        "status": "extracted",
+        "confidence": 0.97,
+        "reasoning": null
+      },
+      "raw_phrase": "Tab Cetirizine",
+      "candidate_matches": [
+        "Cetirizine 10mg",
+        "Cetzine"
+      ],
+      "strength": {
+        "value": "10mg",
+        "source_text": "10mg",
+        "status": "extracted",
+        "confidence": 0.96,
+        "reasoning": null
+      },
+      "form": {
+        "value": "tablet",
+        "source_text": "Tab",
+        "status": "extracted",
+        "confidence": 0.99,
+        "reasoning": null
+      },
+      "dose": {
+        "value": "1 tablet",
+        "source_text": "one tablet",
+        "status": "extracted",
+        "confidence": 0.95,
+        "reasoning": null
+      },
+      "frequency": {
+        "value": "HS",
+        "source_text": "at night",
+        "status": "extracted",
+        "confidence": 0.94,
+        "reasoning": null
+      },
+      "frequency_normalized": "At Bedtime (HS)",
+      "timing": {
+        "value": "at bedtime (HS)",
+        "source_text": "at night",
+        "status": "extracted",
+        "confidence": 0.94,
+        "reasoning": null
+      },
+      "duration": {
+        "value": "5 days",
+        "source_text": "for 5 days",
+        "status": "extracted",
+        "confidence": 0.95,
+        "reasoning": null
+      },
+      "route": {
+        "value": "oral",
+        "source_text": "Tab",
+        "status": "extracted",
+        "confidence": 0.95,
+        "reasoning": null
+      },
+      "special_instructions": null
+    }
+  ],
+  "raw_transcript": "Patient name Rajesh Kumar age 45 years male. Chief complaints fever and body ache for 3 days. Diagnosis viral fever. Prescription: Tab Dolo 650 one tablet three times a day for 5 days. Tab Cetirizine 10mg one tablet at night for 5 days. Advice rest and plenty of fluids. Follow up after 5 days.",
+  "audio_url": null,
+  "validation_issues": [],
+  "clarification_questions": [],
+  "patient_id": null,
+  "permanent_patient_id": "PID-2026-0001",
+  "doctor_id": "dr_ananya_rao",
+  "doctor_name": "Dr. Ananya Rao, MD",
+  "edited_transcript": null,
+  "pdf_path": null,
+  "verified_at": null,
+  "created_at": "",
+  "updated_at": "",
+  "confirmed_at": "2026-11-08T18:00:00",
+  "version": 1
+}

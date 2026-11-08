@@ -1,0 +1,276 @@
+{
+  "id": "rx-script_7-sample",
+  "status": "confirmed",
+  "patient": {
+    "name": {
+      "value": "Ravi Shankar",
+      "source_text": "Ravi Shankar",
+      "status": "extracted",
+      "confidence": 0.97,
+      "reasoning": null
+    },
+    "age": {
+      "value": 50,
+      "source_text": "50 saal",
+      "status": "extracted",
+      "confidence": 0.98,
+      "reasoning": null
+    },
+    "sex": {
+      "value": "male",
+      "source_text": "male",
+      "status": "extracted",
+      "confidence": 0.99,
+      "reasoning": null
+    },
+    "inferred_gender": null
+  },
+  "clinical": {
+    "chief_complaints": {
+      "value": "pet mein dard aur gas ban rahi hai do dinon se (abdominal pain and gas for 2 days)",
+      "source_text": "pet mein dard aur gas ban rahi hai do dinon se",
+      "status": "extracted",
+      "confidence": 0.95,
+      "reasoning": null
+    },
+    "diagnosis": {
+      "value": "peptic ulcer disease",
+      "source_text": "peptic ulcer disease",
+      "status": "extracted",
+      "confidence": 0.98,
+      "reasoning": null
+    },
+    "investigations": {
+      "value": null,
+      "source_text": null,
+      "status": "not_mentioned",
+      "confidence": null,
+      "reasoning": null
+    },
+    "advice": {
+      "value": "khana time pe khayein, mirchi masala band, smoking band (eat on time, avoid spicy food, stop smoking)",
+      "source_text": "khana time pe khayein, mirchi masala band, smoking band",
+      "status": "extracted",
+      "confidence": 0.96,
+      "reasoning": null
+    },
+    "follow_up": {
+      "value": "2 hafte baad (after 2 weeks)",
+      "source_text": "2 hafte baad",
+      "status": "extracted",
+      "confidence": 0.95,
+      "reasoning": null
+    },
+    "unclear_phrases": []
+  },
+  "medicines": [
+    {
+      "name": {
+        "value": "Pantoprazole",
+        "source_text": "Tab Pantoprazole",
+        "status": "extracted",
+        "confidence": 0.99,
+        "reasoning": null
+      },
+      "raw_phrase": "Tab Pantoprazole",
+      "candidate_matches": [
+        "Pantoprazole 40mg",
+        "Pantocid 40"
+      ],
+      "strength": {
+        "value": "40mg",
+        "source_text": "40mg",
+        "status": "extracted",
+        "confidence": 0.99,
+        "reasoning": null
+      },
+      "form": {
+        "value": "tablet",
+        "source_text": "Tab",
+        "status": "extracted",
+        "confidence": 0.99,
+        "reasoning": null
+      },
+      "dose": {
+        "value": "1 tablet",
+        "source_text": "ek tablet",
+        "status": "extracted",
+        "confidence": 0.97,
+        "reasoning": null
+      },
+      "frequency": {
+        "value": "OD",
+        "source_text": "subah",
+        "status": "extracted",
+        "confidence": 0.94,
+        "reasoning": null
+      },
+      "frequency_normalized": "Once Daily (OD)",
+      "timing": {
+        "value": "before food (AC)",
+        "source_text": "subah khali pet",
+        "status": "extracted",
+        "confidence": 0.98,
+        "reasoning": null
+      },
+      "duration": {
+        "value": "14 din (14 days)",
+        "source_text": "14 din tak",
+        "status": "extracted",
+        "confidence": 0.97,
+        "reasoning": null
+      },
+      "route": {
+        "value": "oral",
+        "source_text": "Tab",
+        "status": "extracted",
+        "confidence": 0.95,
+        "reasoning": null
+      },
+      "special_instructions": null
+    },
+    {
+      "name": {
+        "value": "Sucralfate",
+        "source_text": "Syrup Sucralfate",
+        "status": "extracted",
+        "confidence": 0.98,
+        "reasoning": null
+      },
+      "raw_phrase": "Syrup Sucralfate",
+      "candidate_matches": [
+        "Sucralfate Syrup"
+      ],
+      "strength": {
+        "value": null,
+        "source_text": null,
+        "status": "not_mentioned",
+        "confidence": null,
+        "reasoning": null
+      },
+      "form": {
+        "value": "syrup",
+        "source_text": "Syrup",
+        "status": "extracted",
+        "confidence": 0.99,
+        "reasoning": null
+      },
+      "dose": {
+        "value": "10ml",
+        "source_text": "10ml",
+        "status": "extracted",
+        "confidence": 0.98,
+        "reasoning": null
+      },
+      "frequency": {
+        "value": "TDS",
+        "source_text": "din mein teen baar",
+        "status": "extracted",
+        "confidence": 0.97,
+        "reasoning": null
+      },
+      "frequency_normalized": "Three Times Daily (TDS)",
+      "timing": {
+        "value": "before food (AC)",
+        "source_text": "khana khane se pehle",
+        "status": "extracted",
+        "confidence": 0.97,
+        "reasoning": null
+      },
+      "duration": {
+        "value": "14 din (14 days)",
+        "source_text": "14 din",
+        "status": "extracted",
+        "confidence": 0.97,
+        "reasoning": null
+      },
+      "route": {
+        "value": "oral",
+        "source_text": "Syrup",
+        "status": "extracted",
+        "confidence": 0.95,
+        "reasoning": null
+      },
+      "special_instructions": null
+    },
+    {
+      "name": {
+        "value": "Domperidone",
+        "source_text": "Tab Domperidone",
+        "status": "extracted",
+        "confidence": 0.98,
+        "reasoning": null
+      },
+      "raw_phrase": "Tab Domperidone",
+      "candidate_matches": [
+        "Domperidone 10mg"
+      ],
+      "strength": {
+        "value": "10mg",
+        "source_text": "10mg",
+        "status": "extracted",
+        "confidence": 0.99,
+        "reasoning": null
+      },
+      "form": {
+        "value": "tablet",
+        "source_text": "Tab",
+        "status": "extracted",
+        "confidence": 0.99,
+        "reasoning": null
+      },
+      "dose": {
+        "value": "1 tablet",
+        "source_text": "Tab Domperidone 10mg",
+        "status": "extracted",
+        "confidence": 0.92,
+        "reasoning": null
+      },
+      "frequency": {
+        "value": "TDS",
+        "source_text": "din mein teen baar",
+        "status": "extracted",
+        "confidence": 0.97,
+        "reasoning": null
+      },
+      "frequency_normalized": "Three Times Daily (TDS)",
+      "timing": {
+        "value": "before food (AC)",
+        "source_text": "khana khane se pehle",
+        "status": "extracted",
+        "confidence": 0.97,
+        "reasoning": null
+      },
+      "duration": {
+        "value": "7 din (7 days)",
+        "source_text": "7 din",
+        "status": "extracted",
+        "confidence": 0.97,
+        "reasoning": null
+      },
+      "route": {
+        "value": "oral",
+        "source_text": "Tab",
+        "status": "extracted",
+        "confidence": 0.95,
+        "reasoning": null
+      },
+      "special_instructions": null
+    }
+  ],
+  "raw_transcript": "Patient ka naam Ravi Shankar hai, age 50 saal, male. Chief complaint pet mein dard aur gas ban rahi hai do dinon se. Diagnosis peptic ulcer disease. Dawai likhiye: Tab Pantoprazole 40mg subah khali pet ek tablet 14 din tak. Syrup Sucralfate 10ml khana khane se pehle din mein teen baar 14 din. Tab Domperidone 10mg khana khane se pehle din mein teen baar 7 din. Advice: khana time pe khayein, mirchi masala band, smoking band. Follow up 2 hafte baad.",
+  "audio_url": null,
+  "validation_issues": [],
+  "clarification_questions": [],
+  "patient_id": null,
+  "permanent_patient_id": "PID-2026-0007",
+  "doctor_id": "dr_ananya_rao",
+  "doctor_name": "Dr. Ananya Rao, MD",
+  "edited_transcript": null,
+  "pdf_path": null,
+  "verified_at": null,
+  "created_at": "",
+  "updated_at": "",
+  "confirmed_at": "2026-11-08T18:00:00",
+  "version": 1
+}

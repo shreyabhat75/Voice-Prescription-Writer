@@ -1,0 +1,218 @@
+{
+  "id": "rx-script_2-sample",
+  "status": "confirmed",
+  "patient": {
+    "name": {
+      "value": "Sunita Sharma",
+      "source_text": "Sunita Sharma",
+      "status": "extracted",
+      "confidence": 0.98,
+      "reasoning": null
+    },
+    "age": {
+      "value": 38,
+      "source_text": "38",
+      "status": "extracted",
+      "confidence": 0.99,
+      "reasoning": null
+    },
+    "sex": {
+      "value": "female",
+      "source_text": "female",
+      "status": "extracted",
+      "confidence": 0.99,
+      "reasoning": null
+    },
+    "inferred_gender": null
+  },
+  "clinical": {
+    "chief_complaints": {
+      "value": "acidity and gastric pain since 1 week",
+      "source_text": "acidity and gastric pain since 1 week",
+      "status": "extracted",
+      "confidence": 0.95,
+      "reasoning": null
+    },
+    "diagnosis": {
+      "value": "GERD",
+      "source_text": "GERD",
+      "status": "extracted",
+      "confidence": 0.96,
+      "reasoning": null
+    },
+    "investigations": {
+      "value": null,
+      "source_text": null,
+      "status": "not_mentioned",
+      "confidence": null,
+      "reasoning": null
+    },
+    "advice": {
+      "value": "avoid spicy and oily food",
+      "source_text": "avoid spicy and oily food",
+      "status": "extracted",
+      "confidence": 0.95,
+      "reasoning": null
+    },
+    "follow_up": {
+      "value": "after 2 weeks",
+      "source_text": "after 2 weeks",
+      "status": "extracted",
+      "confidence": 0.95,
+      "reasoning": null
+    },
+    "unclear_phrases": []
+  },
+  "medicines": [
+    {
+      "name": {
+        "value": "Pantoprazole",
+        "source_text": "Tab Pantoprazole",
+        "status": "extracted",
+        "confidence": 0.99,
+        "reasoning": null
+      },
+      "raw_phrase": "Tab Pantoprazole",
+      "candidate_matches": [
+        "Pantoprazole 40mg",
+        "Pantocid 40"
+      ],
+      "strength": {
+        "value": "40mg",
+        "source_text": "40mg",
+        "status": "extracted",
+        "confidence": 0.98,
+        "reasoning": null
+      },
+      "form": {
+        "value": "tablet",
+        "source_text": "Tab",
+        "status": "extracted",
+        "confidence": 0.99,
+        "reasoning": null
+      },
+      "dose": {
+        "value": "1 tablet",
+        "source_text": "one tablet",
+        "status": "extracted",
+        "confidence": 0.96,
+        "reasoning": null
+      },
+      "frequency": {
+        "value": "OD",
+        "source_text": "before breakfast",
+        "status": "extracted",
+        "confidence": 0.92,
+        "reasoning": null
+      },
+      "frequency_normalized": "Once Daily (OD)",
+      "timing": {
+        "value": "before breakfast (AC)",
+        "source_text": "before breakfast",
+        "status": "extracted",
+        "confidence": 0.98,
+        "reasoning": null
+      },
+      "duration": {
+        "value": "14 days",
+        "source_text": "for 14 days",
+        "status": "extracted",
+        "confidence": 0.96,
+        "reasoning": null
+      },
+      "route": {
+        "value": "oral",
+        "source_text": "Tab",
+        "status": "extracted",
+        "confidence": 0.95,
+        "reasoning": null
+      },
+      "special_instructions": null
+    },
+    {
+      "name": {
+        "value": "Combiflam",
+        "source_text": "Tab Combiflam",
+        "status": "extracted",
+        "confidence": 0.98,
+        "reasoning": null
+      },
+      "raw_phrase": "Tab Combiflam",
+      "candidate_matches": [
+        "Combiflam"
+      ],
+      "strength": {
+        "value": null,
+        "source_text": null,
+        "status": "not_mentioned",
+        "confidence": null,
+        "reasoning": null
+      },
+      "form": {
+        "value": "tablet",
+        "source_text": "Tab",
+        "status": "extracted",
+        "confidence": 0.99,
+        "reasoning": null
+      },
+      "dose": {
+        "value": "1 tablet",
+        "source_text": "one tablet",
+        "status": "extracted",
+        "confidence": 0.95,
+        "reasoning": null
+      },
+      "frequency": {
+        "value": "SOS",
+        "source_text": "SOS for pain",
+        "status": "extracted",
+        "confidence": 0.98,
+        "reasoning": null
+      },
+      "frequency_normalized": "As Needed (SOS)",
+      "timing": {
+        "value": "when required",
+        "source_text": "for pain",
+        "status": "extracted",
+        "confidence": 0.92,
+        "reasoning": null
+      },
+      "duration": {
+        "value": null,
+        "source_text": null,
+        "status": "not_mentioned",
+        "confidence": null,
+        "reasoning": null
+      },
+      "route": {
+        "value": "oral",
+        "source_text": "Tab",
+        "status": "extracted",
+        "confidence": 0.95,
+        "reasoning": null
+      },
+      "special_instructions": {
+        "value": "take only when having severe pain",
+        "source_text": "for pain",
+        "status": "extracted",
+        "confidence": 0.9,
+        "reasoning": null
+      }
+    }
+  ],
+  "raw_transcript": "Patient Sunita Sharma age 38 female. Chief complaint acidity and gastric pain since 1 week. Diagnosis GERD. Prescription: Tab Pantoprazole 40mg one tablet before breakfast for 14 days. Tab Combiflam one tablet SOS for pain. Advice avoid spicy and oily food. Follow up after 2 weeks.",
+  "audio_url": null,
+  "validation_issues": [],
+  "clarification_questions": [],
+  "patient_id": null,
+  "permanent_patient_id": "PID-2026-0002",
+  "doctor_id": "dr_ananya_rao",
+  "doctor_name": "Dr. Ananya Rao, MD",
+  "edited_transcript": null,
+  "pdf_path": null,
+  "verified_at": null,
+  "created_at": "",
+  "updated_at": "",
+  "confirmed_at": "2026-11-08T18:00:00",
+  "version": 1
+}

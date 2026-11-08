@@ -1,0 +1,219 @@
+{
+  "id": "rx-script_4-sample",
+  "status": "confirmed",
+  "patient": {
+    "name": {
+      "value": "Priya Menon",
+      "source_text": "Priya Menon",
+      "status": "extracted",
+      "confidence": 0.98,
+      "reasoning": null
+    },
+    "age": {
+      "value": 29,
+      "source_text": "29",
+      "status": "extracted",
+      "confidence": 0.99,
+      "reasoning": null
+    },
+    "sex": {
+      "value": "female",
+      "source_text": "female",
+      "status": "extracted",
+      "confidence": 0.99,
+      "reasoning": null
+    },
+    "inferred_gender": null
+  },
+  "clinical": {
+    "chief_complaints": {
+      "value": "headache on and off for 1 month, more on the right side",
+      "source_text": "headache on and off for 1 month, more on the right side",
+      "status": "extracted",
+      "confidence": 0.96,
+      "reasoning": null
+    },
+    "diagnosis": {
+      "value": "migraine",
+      "source_text": "migraine",
+      "status": "extracted",
+      "confidence": 0.97,
+      "reasoning": null
+    },
+    "investigations": {
+      "value": null,
+      "source_text": null,
+      "status": "not_mentioned",
+      "confidence": null,
+      "reasoning": null
+    },
+    "advice": {
+      "value": "maintain headache diary, avoid triggers",
+      "source_text": "maintain headache diary, avoid triggers",
+      "status": "extracted",
+      "confidence": 0.96,
+      "reasoning": null
+    },
+    "follow_up": {
+      "value": "after 1 month",
+      "source_text": "after 1 month",
+      "status": "extracted",
+      "confidence": 0.95,
+      "reasoning": null
+    },
+    "unclear_phrases": []
+  },
+  "medicines": [
+    {
+      "name": {
+        "value": "Sumatriptan",
+        "source_text": "Sumatriptan 50mg",
+        "status": "extracted",
+        "confidence": 0.98,
+        "reasoning": null
+      },
+      "raw_phrase": "Sumatriptan 50mg",
+      "candidate_matches": [
+        "Suminat 25mg",
+        "Suminat 50mg"
+      ],
+      "strength": {
+        "value": "50mg",
+        "source_text": "make that Sumatriptan 50mg",
+        "status": "extracted",
+        "confidence": 0.99,
+        "reasoning": null
+      },
+      "form": {
+        "value": "tablet",
+        "source_text": "Tab",
+        "status": "extracted",
+        "confidence": 0.99,
+        "reasoning": null
+      },
+      "dose": {
+        "value": "1 tablet",
+        "source_text": "one tablet",
+        "status": "extracted",
+        "confidence": 0.95,
+        "reasoning": null
+      },
+      "frequency": {
+        "value": "SOS",
+        "source_text": "SOS for headache",
+        "status": "extracted",
+        "confidence": 0.98,
+        "reasoning": null
+      },
+      "frequency_normalized": "As Needed (SOS)",
+      "timing": {
+        "value": "at onset of headache",
+        "source_text": "for headache",
+        "status": "extracted",
+        "confidence": 0.92,
+        "reasoning": null
+      },
+      "duration": {
+        "value": null,
+        "source_text": null,
+        "status": "not_mentioned",
+        "confidence": null,
+        "reasoning": null
+      },
+      "route": {
+        "value": "oral",
+        "source_text": "Tab",
+        "status": "extracted",
+        "confidence": 0.95,
+        "reasoning": null
+      },
+      "special_instructions": {
+        "value": "take at earliest onset of headache",
+        "source_text": "one tablet SOS for headache",
+        "status": "extracted",
+        "confidence": 0.91,
+        "reasoning": null
+      }
+    },
+    {
+      "name": {
+        "value": "Propranolol",
+        "source_text": "Tab Propranolol",
+        "status": "extracted",
+        "confidence": 0.98,
+        "reasoning": null
+      },
+      "raw_phrase": "Tab Propranolol",
+      "candidate_matches": [
+        "Ciplar 10mg",
+        "Ciplar 40mg"
+      ],
+      "strength": {
+        "value": "20mg",
+        "source_text": "20mg",
+        "status": "extracted",
+        "confidence": 0.99,
+        "reasoning": null
+      },
+      "form": {
+        "value": "tablet",
+        "source_text": "Tab",
+        "status": "extracted",
+        "confidence": 0.99,
+        "reasoning": null
+      },
+      "dose": {
+        "value": "1 tablet",
+        "source_text": "one tablet",
+        "status": "extracted",
+        "confidence": 0.95,
+        "reasoning": null
+      },
+      "frequency": {
+        "value": "BD",
+        "source_text": "twice daily",
+        "status": "extracted",
+        "confidence": 0.98,
+        "reasoning": null
+      },
+      "frequency_normalized": "Twice Daily (BD)",
+      "timing": {
+        "value": "after food (PC)",
+        "source_text": null,
+        "status": "not_mentioned",
+        "confidence": null,
+        "reasoning": null
+      },
+      "duration": {
+        "value": "30 days",
+        "source_text": "for 30 days",
+        "status": "extracted",
+        "confidence": 0.96,
+        "reasoning": null
+      },
+      "route": {
+        "value": "oral",
+        "source_text": "Tab",
+        "status": "extracted",
+        "confidence": 0.95,
+        "reasoning": null
+      },
+      "special_instructions": null
+    }
+  ],
+  "raw_transcript": "Patient Priya Menon age 29 female. Chief complaints headache on and off for 1 month, more on the right side. Diagnosis migraine. Prescription: Tab Sumatriptan 25mg... no wait, make that Sumatriptan 50mg one tablet SOS for headache. Tab Amitriptyline 10mg one tablet at night for 30 days. Actually remove the Amitriptyline. Tab Propranolol 20mg one tablet twice daily for 30 days. Advice maintain headache diary, avoid triggers. Follow up after 1 month.",
+  "audio_url": null,
+  "validation_issues": [],
+  "clarification_questions": [],
+  "patient_id": null,
+  "permanent_patient_id": "PID-2026-0004",
+  "doctor_id": "dr_ananya_rao",
+  "doctor_name": "Dr. Ananya Rao, MD",
+  "edited_transcript": null,
+  "pdf_path": null,
+  "verified_at": null,
+  "created_at": "",
+  "updated_at": "",
+  "confirmed_at": "2026-11-08T18:00:00",
+  "version": 1
+}

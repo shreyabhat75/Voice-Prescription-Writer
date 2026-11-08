@@ -1,0 +1,342 @@
+{
+  "id": "rx-script_5-sample",
+  "status": "confirmed",
+  "patient": {
+    "name": {
+      "value": "Arjun Patel",
+      "source_text": "Arjun Patel",
+      "status": "extracted",
+      "confidence": 0.98,
+      "reasoning": null
+    },
+    "age": {
+      "value": 8,
+      "source_text": "8 years",
+      "status": "extracted",
+      "confidence": 0.99,
+      "reasoning": null
+    },
+    "sex": {
+      "value": "male",
+      "source_text": "male",
+      "status": "extracted",
+      "confidence": 0.99,
+      "reasoning": null
+    },
+    "inferred_gender": null
+  },
+  "clinical": {
+    "chief_complaints": {
+      "value": "vomiting and loose stools since morning",
+      "source_text": "vomiting and loose stools since morning",
+      "status": "extracted",
+      "confidence": 0.96,
+      "reasoning": null
+    },
+    "diagnosis": {
+      "value": "acute gastroenteritis",
+      "source_text": "acute gastroenteritis",
+      "status": "extracted",
+      "confidence": 0.98,
+      "reasoning": null
+    },
+    "investigations": {
+      "value": null,
+      "source_text": null,
+      "status": "not_mentioned",
+      "confidence": null,
+      "reasoning": null
+    },
+    "advice": {
+      "value": "continue breastfeeding, give ORS after every loose stool",
+      "source_text": "continue breastfeeding, give ORS after every loose stool",
+      "status": "extracted",
+      "confidence": 0.96,
+      "reasoning": null
+    },
+    "follow_up": {
+      "value": "tomorrow or earlier if not improving",
+      "source_text": "tomorrow or earlier if not improving",
+      "status": "extracted",
+      "confidence": 0.95,
+      "reasoning": null
+    },
+    "unclear_phrases": []
+  },
+  "medicines": [
+    {
+      "name": {
+        "value": "Ondansetron",
+        "source_text": "Inj Ondansetron",
+        "status": "extracted",
+        "confidence": 0.99,
+        "reasoning": null
+      },
+      "raw_phrase": "Inj Ondansetron",
+      "candidate_matches": [
+        "Emeset 4mg",
+        "Ondem 4mg"
+      ],
+      "strength": {
+        "value": "2mg",
+        "source_text": "2mg",
+        "status": "extracted",
+        "confidence": 0.98,
+        "reasoning": null
+      },
+      "form": {
+        "value": "injection",
+        "source_text": "Inj",
+        "status": "extracted",
+        "confidence": 0.99,
+        "reasoning": null
+      },
+      "dose": {
+        "value": "2mg",
+        "source_text": "2mg",
+        "status": "extracted",
+        "confidence": 0.95,
+        "reasoning": null
+      },
+      "frequency": {
+        "value": "STAT",
+        "source_text": "stat",
+        "status": "extracted",
+        "confidence": 0.99,
+        "reasoning": null
+      },
+      "frequency_normalized": "Immediately (STAT)",
+      "timing": {
+        "value": "immediately",
+        "source_text": "stat",
+        "status": "extracted",
+        "confidence": 0.99,
+        "reasoning": null
+      },
+      "duration": {
+        "value": "single dose",
+        "source_text": "stat",
+        "status": "extracted",
+        "confidence": 0.95,
+        "reasoning": null
+      },
+      "route": {
+        "value": "intravenous",
+        "source_text": "IV",
+        "status": "extracted",
+        "confidence": 0.99,
+        "reasoning": null
+      },
+      "special_instructions": null
+    },
+    {
+      "name": {
+        "value": "Econorm",
+        "source_text": "Syrup Econorm",
+        "status": "extracted",
+        "confidence": 0.97,
+        "reasoning": null
+      },
+      "raw_phrase": "Syrup Econorm",
+      "candidate_matches": [],
+      "strength": {
+        "value": null,
+        "source_text": null,
+        "status": "not_mentioned",
+        "confidence": null,
+        "reasoning": null
+      },
+      "form": {
+        "value": "sachet",
+        "source_text": "sachet",
+        "status": "extracted",
+        "confidence": 0.98,
+        "reasoning": null
+      },
+      "dose": {
+        "value": "1 sachet",
+        "source_text": "one sachet",
+        "status": "extracted",
+        "confidence": 0.96,
+        "reasoning": null
+      },
+      "frequency": {
+        "value": "BD",
+        "source_text": "twice daily",
+        "status": "extracted",
+        "confidence": 0.98,
+        "reasoning": null
+      },
+      "frequency_normalized": "Twice Daily (BD)",
+      "timing": {
+        "value": null,
+        "source_text": null,
+        "status": "not_mentioned",
+        "confidence": null,
+        "reasoning": null
+      },
+      "duration": {
+        "value": "5 days",
+        "source_text": "for 5 days",
+        "status": "extracted",
+        "confidence": 0.96,
+        "reasoning": null
+      },
+      "route": {
+        "value": "oral",
+        "source_text": null,
+        "status": "not_mentioned",
+        "confidence": null,
+        "reasoning": null
+      },
+      "special_instructions": null
+    },
+    {
+      "name": {
+        "value": "ORS solution",
+        "source_text": "ORS solution",
+        "status": "extracted",
+        "confidence": 0.98,
+        "reasoning": null
+      },
+      "raw_phrase": "ORS solution",
+      "candidate_matches": [],
+      "strength": {
+        "value": null,
+        "source_text": null,
+        "status": "not_mentioned",
+        "confidence": null,
+        "reasoning": null
+      },
+      "form": {
+        "value": "oral solution",
+        "source_text": "solution",
+        "status": "extracted",
+        "confidence": 0.96,
+        "reasoning": null
+      },
+      "dose": {
+        "value": "ad lib",
+        "source_text": "ad lib",
+        "status": "extracted",
+        "confidence": 0.95,
+        "reasoning": null
+      },
+      "frequency": {
+        "value": "SOS",
+        "source_text": "ad lib",
+        "status": "extracted",
+        "confidence": 0.94,
+        "reasoning": null
+      },
+      "frequency_normalized": "As Needed (SOS)",
+      "timing": {
+        "value": "after every loose stool",
+        "source_text": "after every loose stool",
+        "status": "extracted",
+        "confidence": 0.93,
+        "reasoning": null
+      },
+      "duration": {
+        "value": null,
+        "source_text": null,
+        "status": "not_mentioned",
+        "confidence": null,
+        "reasoning": null
+      },
+      "route": {
+        "value": "oral",
+        "source_text": "ORS",
+        "status": "extracted",
+        "confidence": 0.95,
+        "reasoning": null
+      },
+      "special_instructions": null
+    },
+    {
+      "name": {
+        "value": "Paracetamol",
+        "source_text": "Tab Paracetamol",
+        "status": "extracted",
+        "confidence": 0.98,
+        "reasoning": null
+      },
+      "raw_phrase": "Tab Paracetamol",
+      "candidate_matches": [
+        "Paracetamol"
+      ],
+      "strength": {
+        "value": "250mg",
+        "source_text": "250mg",
+        "status": "extracted",
+        "confidence": 0.99,
+        "reasoning": null
+      },
+      "form": {
+        "value": "tablet",
+        "source_text": "Tab",
+        "status": "extracted",
+        "confidence": 0.99,
+        "reasoning": null
+      },
+      "dose": {
+        "value": "1 tablet",
+        "source_text": "250mg",
+        "status": "extracted",
+        "confidence": 0.92,
+        "reasoning": null
+      },
+      "frequency": {
+        "value": "SOS",
+        "source_text": "SOS",
+        "status": "extracted",
+        "confidence": 0.98,
+        "reasoning": null
+      },
+      "frequency_normalized": "As Needed (SOS)",
+      "timing": {
+        "value": "if fever above 100 degrees",
+        "source_text": "if fever above 100 degrees",
+        "status": "extracted",
+        "confidence": 0.98,
+        "reasoning": null
+      },
+      "duration": {
+        "value": null,
+        "source_text": null,
+        "status": "not_mentioned",
+        "confidence": null,
+        "reasoning": null
+      },
+      "route": {
+        "value": "oral",
+        "source_text": "Tab",
+        "status": "extracted",
+        "confidence": 0.95,
+        "reasoning": null
+      },
+      "special_instructions": {
+        "value": "maximum three times a day",
+        "source_text": "maximum three times a day",
+        "status": "extracted",
+        "confidence": 0.95,
+        "reasoning": null
+      }
+    }
+  ],
+  "raw_transcript": "Patient Arjun Patel age 8 years male. Chief complaints vomiting and loose stools since morning. Diagnosis acute gastroenteritis. Prescription: Inj Ondansetron 2mg IV stat. Syrup Econorm one sachet twice daily for 5 days. ORS solution ad lib. Tab Paracetamol 250mg if fever above 100 degrees, SOS, maximum three times a day. Advice continue breastfeeding, give ORS after every loose stool. Follow up tomorrow or earlier if not improving.",
+  "audio_url": null,
+  "validation_issues": [],
+  "clarification_questions": [],
+  "patient_id": null,
+  "permanent_patient_id": "PID-2026-0005",
+  "doctor_id": "dr_ananya_rao",
+  "doctor_name": "Dr. Ananya Rao, MD",
+  "edited_transcript": null,
+  "pdf_path": null,
+  "verified_at": null,
+  "created_at": "",
+  "updated_at": "",
+  "confirmed_at": "2026-11-08T18:00:00",
+  "version": 1
+}

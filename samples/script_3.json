@@ -1,0 +1,404 @@
+{
+  "id": "rx-script_3-sample",
+  "status": "confirmed",
+  "patient": {
+    "name": {
+      "value": "Mohan Lal",
+      "source_text": "Mohan Lal",
+      "status": "extracted",
+      "confidence": 0.98,
+      "reasoning": null
+    },
+    "age": {
+      "value": 62,
+      "source_text": "62",
+      "status": "extracted",
+      "confidence": 0.99,
+      "reasoning": null
+    },
+    "sex": {
+      "value": "male",
+      "source_text": "male",
+      "status": "extracted",
+      "confidence": 0.99,
+      "reasoning": null
+    },
+    "inferred_gender": null
+  },
+  "clinical": {
+    "chief_complaints": {
+      "value": "breathlessness and cough with sputum for 10 days",
+      "source_text": "breathlessness and cough with sputum for 10 days",
+      "status": "extracted",
+      "confidence": 0.96,
+      "reasoning": null
+    },
+    "diagnosis": {
+      "value": "COPD with acute exacerbation",
+      "source_text": "COPD with acute exacerbation",
+      "status": "extracted",
+      "confidence": 0.97,
+      "reasoning": null
+    },
+    "investigations": {
+      "value": "CBC, chest X-ray PA view, sputum culture",
+      "source_text": "CBC, chest X-ray PA view, sputum culture",
+      "status": "extracted",
+      "confidence": 0.98,
+      "reasoning": null
+    },
+    "advice": {
+      "value": "no smoking, avoid dust and cold air",
+      "source_text": "no smoking, avoid dust and cold air",
+      "status": "extracted",
+      "confidence": 0.96,
+      "reasoning": null
+    },
+    "follow_up": {
+      "value": "after 1 week with reports",
+      "source_text": "after 1 week with reports",
+      "status": "extracted",
+      "confidence": 0.95,
+      "reasoning": null
+    },
+    "unclear_phrases": []
+  },
+  "medicines": [
+    {
+      "name": {
+        "value": "Hydrocortisone",
+        "source_text": "Inj Hydrocortisone",
+        "status": "extracted",
+        "confidence": 0.98,
+        "reasoning": null
+      },
+      "raw_phrase": "Inj Hydrocortisone",
+      "candidate_matches": [],
+      "strength": {
+        "value": "100mg",
+        "source_text": "100mg",
+        "status": "extracted",
+        "confidence": 0.98,
+        "reasoning": null
+      },
+      "form": {
+        "value": "injection",
+        "source_text": "Inj",
+        "status": "extracted",
+        "confidence": 0.99,
+        "reasoning": null
+      },
+      "dose": {
+        "value": "1 vial",
+        "source_text": "Inj Hydrocortisone 100mg",
+        "status": "extracted",
+        "confidence": 0.92,
+        "reasoning": null
+      },
+      "frequency": {
+        "value": "STAT",
+        "source_text": "stat",
+        "status": "extracted",
+        "confidence": 0.99,
+        "reasoning": null
+      },
+      "frequency_normalized": "Immediately (STAT)",
+      "timing": {
+        "value": "immediately",
+        "source_text": "stat",
+        "status": "extracted",
+        "confidence": 0.99,
+        "reasoning": null
+      },
+      "duration": {
+        "value": "single dose",
+        "source_text": "stat",
+        "status": "extracted",
+        "confidence": 0.95,
+        "reasoning": null
+      },
+      "route": {
+        "value": "intravenous",
+        "source_text": "IV",
+        "status": "extracted",
+        "confidence": 0.99,
+        "reasoning": null
+      },
+      "special_instructions": null
+    },
+    {
+      "name": {
+        "value": "Duolin plus Budecort",
+        "source_text": "Neb Duolin plus Budecort",
+        "status": "needs_review",
+        "confidence": 0.6,
+        "reasoning": null
+      },
+      "raw_phrase": "Neb Duolin plus Budecort",
+      "candidate_matches": [
+        "Budecort 200 Inhaler",
+        "Budecort 0.5mg Respules"
+      ],
+      "strength": {
+        "value": null,
+        "source_text": null,
+        "status": "not_mentioned",
+        "confidence": null,
+        "reasoning": null
+      },
+      "form": {
+        "value": "respules / nebulization",
+        "source_text": "Neb",
+        "status": "extracted",
+        "confidence": 0.98,
+        "reasoning": null
+      },
+      "dose": {
+        "value": "1 respule",
+        "source_text": "nebulization",
+        "status": "extracted",
+        "confidence": 0.9,
+        "reasoning": null
+      },
+      "frequency": {
+        "value": "TDS",
+        "source_text": "three times a day",
+        "status": "extracted",
+        "confidence": 0.96,
+        "reasoning": null
+      },
+      "frequency_normalized": "Three Times Daily (TDS)",
+      "timing": {
+        "value": null,
+        "source_text": null,
+        "status": "not_mentioned",
+        "confidence": null,
+        "reasoning": null
+      },
+      "duration": {
+        "value": "5 days",
+        "source_text": null,
+        "status": "not_mentioned",
+        "confidence": null,
+        "reasoning": null
+      },
+      "route": {
+        "value": "nebulization",
+        "source_text": "nebulization",
+        "status": "extracted",
+        "confidence": 0.98,
+        "reasoning": null
+      },
+      "special_instructions": null
+    },
+    {
+      "name": {
+        "value": "Azithromycin",
+        "source_text": "Tab Azithromycin",
+        "status": "extracted",
+        "confidence": 0.99,
+        "reasoning": null
+      },
+      "raw_phrase": "Tab Azithromycin",
+      "candidate_matches": [
+        "Azithromycin 500mg"
+      ],
+      "strength": {
+        "value": "500mg",
+        "source_text": "500mg",
+        "status": "extracted",
+        "confidence": 0.98,
+        "reasoning": null
+      },
+      "form": {
+        "value": "tablet",
+        "source_text": "Tab",
+        "status": "extracted",
+        "confidence": 0.99,
+        "reasoning": null
+      },
+      "dose": {
+        "value": "1 tablet",
+        "source_text": "one tablet",
+        "status": "extracted",
+        "confidence": 0.95,
+        "reasoning": null
+      },
+      "frequency": {
+        "value": "OD",
+        "source_text": "once daily",
+        "status": "extracted",
+        "confidence": 0.97,
+        "reasoning": null
+      },
+      "frequency_normalized": "Once Daily (OD)",
+      "timing": {
+        "value": "after food (PC)",
+        "source_text": null,
+        "status": "not_mentioned",
+        "confidence": null,
+        "reasoning": null
+      },
+      "duration": {
+        "value": "5 days",
+        "source_text": "for 5 days",
+        "status": "extracted",
+        "confidence": 0.96,
+        "reasoning": null
+      },
+      "route": {
+        "value": "oral",
+        "source_text": "Tab",
+        "status": "extracted",
+        "confidence": 0.95,
+        "reasoning": null
+      },
+      "special_instructions": null
+    },
+    {
+      "name": {
+        "value": "Deriphyllin retard",
+        "source_text": "Tab Deriphyllin retard",
+        "status": "extracted",
+        "confidence": 0.97,
+        "reasoning": null
+      },
+      "raw_phrase": "Tab Deriphyllin retard",
+      "candidate_matches": [
+        "Deriphyllin Retard 150mg",
+        "Deriphyllin Retard 300mg"
+      ],
+      "strength": {
+        "value": "150mg",
+        "source_text": "150mg",
+        "status": "extracted",
+        "confidence": 0.98,
+        "reasoning": null
+      },
+      "form": {
+        "value": "tablet",
+        "source_text": "Tab",
+        "status": "extracted",
+        "confidence": 0.99,
+        "reasoning": null
+      },
+      "dose": {
+        "value": "1 tablet",
+        "source_text": "one tablet",
+        "status": "extracted",
+        "confidence": 0.95,
+        "reasoning": null
+      },
+      "frequency": {
+        "value": "BD",
+        "source_text": "twice daily",
+        "status": "extracted",
+        "confidence": 0.98,
+        "reasoning": null
+      },
+      "frequency_normalized": "Twice Daily (BD)",
+      "timing": {
+        "value": "after food (PC)",
+        "source_text": null,
+        "status": "not_mentioned",
+        "confidence": null,
+        "reasoning": null
+      },
+      "duration": {
+        "value": "7 days",
+        "source_text": "for 7 days",
+        "status": "extracted",
+        "confidence": 0.96,
+        "reasoning": null
+      },
+      "route": {
+        "value": "oral",
+        "source_text": "Tab",
+        "status": "extracted",
+        "confidence": 0.95,
+        "reasoning": null
+      },
+      "special_instructions": null
+    },
+    {
+      "name": {
+        "value": "Ambrodil-S",
+        "source_text": "Syrup Ambrodil-S",
+        "status": "extracted",
+        "confidence": 0.98,
+        "reasoning": null
+      },
+      "raw_phrase": "Syrup Ambrodil-S",
+      "candidate_matches": [
+        "Ambrodil-S Syrup",
+        "Ascoril Syrup"
+      ],
+      "strength": {
+        "value": null,
+        "source_text": null,
+        "status": "not_mentioned",
+        "confidence": null,
+        "reasoning": null
+      },
+      "form": {
+        "value": "syrup",
+        "source_text": "Syrup",
+        "status": "extracted",
+        "confidence": 0.99,
+        "reasoning": null
+      },
+      "dose": {
+        "value": "10ml",
+        "source_text": "10ml",
+        "status": "extracted",
+        "confidence": 0.97,
+        "reasoning": null
+      },
+      "frequency": {
+        "value": "TDS",
+        "source_text": "three times a day",
+        "status": "extracted",
+        "confidence": 0.96,
+        "reasoning": null
+      },
+      "frequency_normalized": "Three Times Daily (TDS)",
+      "timing": {
+        "value": "after food (PC)",
+        "source_text": null,
+        "status": "not_mentioned",
+        "confidence": null,
+        "reasoning": null
+      },
+      "duration": {
+        "value": "7 days",
+        "source_text": "for 7 days",
+        "status": "extracted",
+        "confidence": 0.96,
+        "reasoning": null
+      },
+      "route": {
+        "value": "oral",
+        "source_text": "Syrup",
+        "status": "extracted",
+        "confidence": 0.95,
+        "reasoning": null
+      },
+      "special_instructions": null
+    }
+  ],
+  "raw_transcript": "Patient Mohan Lal age 62 male. Chief complaints breathlessness and cough with sputum for 10 days. Diagnosis COPD with acute exacerbation. Prescription: Inj Hydrocortisone 100mg IV stat. Neb Duolin plus Budecort nebulization three times a day. Tab Azithromycin 500mg once daily for 5 days. Tab Deriphyllin retard 150mg twice daily for 7 days. Syrup Ambrodil-S 10ml three times a day for 7 days. Investigations: CBC, chest X-ray PA view, sputum culture. Advice no smoking, avoid dust and cold air. Follow up after 1 week with reports.",
+  "audio_url": null,
+  "validation_issues": [],
+  "clarification_questions": [],
+  "patient_id": null,
+  "permanent_patient_id": "PID-2026-0003",
+  "doctor_id": "dr_ananya_rao",
+  "doctor_name": "Dr. Ananya Rao, MD",
+  "edited_transcript": null,
+  "pdf_path": null,
+  "verified_at": null,
+  "created_at": "",
+  "updated_at": "",
+  "confirmed_at": "2026-11-08T18:00:00",
+  "version": 1
+}
