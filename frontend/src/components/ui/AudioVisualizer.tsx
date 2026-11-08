@@ -139,12 +139,12 @@ export const AudioVisualizer: React.FC<AudioVisualizerProps> = ({
   if (!isRecording) {
     return (
       <div
-        className="waveform-container flex items-center justify-center"
+        className="flex items-center justify-center rounded-2xl bg-slate-50 border border-slate-200 shadow-2xs transition-colors"
         style={{ width, height }}
       >
-        <div className="flex flex-col items-center gap-1 opacity-30">
+        <div className="flex flex-col items-center gap-1 text-slate-400">
           <MicOff className="w-5 h-5 text-slate-400" />
-          <span className="text-[10px] text-slate-500 font-medium">Idle</span>
+          <span className="text-[11px] text-slate-500 font-medium">Idle</span>
         </div>
       </div>
     );
