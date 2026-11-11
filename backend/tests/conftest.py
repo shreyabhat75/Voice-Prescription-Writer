@@ -7,6 +7,8 @@ import os
 # Ensure tests always use deterministic mock providers without external network dependencies
 os.environ["STT_PROVIDER"] = "mock"
 os.environ["LLM_PROVIDER"] = "mock"
+os.environ["DATABASE_URL"] = "sqlite:///./test.db"
+os.environ["DATABASE_PATH"] = "./test.db"
 
 import asyncio
 import inspect
@@ -20,6 +22,9 @@ from backend.config import get_settings
 from backend.database import init_db
 from backend.main import app
 
+os.environ["DATABASE_URL"] = "sqlite:///./test.db"
+os.environ["DATABASE_PATH"] = "./test.db"
+
 
 def pytest_pyfunc_call(pyfuncitem):
     """Enable seamless async test functions without requiring pytest-asyncio."""
@@ -29,13 +34,21 @@ def pytest_pyfunc_call(pyfuncitem):
         funcargs = {arg: pyfuncitem.funcargs[arg] for arg in argnames if arg in pyfuncitem.funcargs}
 
         async def runner():
-            db_path = os.environ.get("DATABASE_PATH", "./test.db")
-            await init_db(db_path)
-            transport = ASGITransport(app=app)
-            async with AsyncClient(transport=transport, base_url="http://test") as client:
-                if "async_client" in funcargs:
+            if "async_client" in funcargs:
+                db_path = os.environ.get("DATABASE_PATH", "./test.db")
+                await init_db(db_path)
+                transport = ASGITransport(app=app)
+                async with AsyncClient(transport=transport, base_url="http://test") as client:
                     funcargs["async_client"] = client
-                await testfunction(**funcargs)
+                    if pyfuncitem.instance is not None:
+                        await testfunction(pyfuncitem.instance, **funcargs)
+                    else:
+                        await testfunction(**funcargs)
+            else:
+                if pyfuncitem.instance is not None:
+                    await testfunction(pyfuncitem.instance, **funcargs)
+                else:
+                    await testfunction(**funcargs)
 
         asyncio.run(runner())
         return True
@@ -46,7 +59,9 @@ def pytest_pyfunc_call(pyfuncitem):
 def setup_test_environment():
     """Configure environment variables for tests."""
     temp_dir = tempfile.mkdtemp()
-    os.environ["DATABASE_PATH"] = os.path.join(temp_dir, "test.db")
+    test_db = os.path.join(temp_dir, "test.db")
+    os.environ["DATABASE_PATH"] = test_db
+    os.environ["DATABASE_URL"] = f"sqlite:///{test_db}"
     os.environ["UPLOAD_DIR"] = os.path.join(temp_dir, "uploads")
     os.environ["PDF_OUTPUT_DIR"] = os.path.join(temp_dir, "pdf_output")
     os.environ["STT_PROVIDER"] = "mock"

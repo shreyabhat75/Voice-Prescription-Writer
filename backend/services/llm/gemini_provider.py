@@ -17,10 +17,10 @@ logger = logging.getLogger(__name__)
 
 
 FALLBACK_MODELS = [
-    "gemini-2.5-flash-lite",
-    "gemini-3.1-flash-lite",
-    "gemini-3.5-flash",
-    "gemini-2.5-flash",
+    "gemini-1.5-flash",
+    "gemini-1.5-flash-8b",
+    "gemini-2.0-flash",
+    "gemini-1.5-pro",
 ]
 
 
@@ -30,7 +30,7 @@ class GeminiProvider(LLMProvider):
     def __init__(self, api_key: str | None = None, model: str | None = None) -> None:
         settings = get_settings()
         self.api_key = api_key or settings.GEMINI_API_KEY
-        self.model = model or settings.GEMINI_MODEL or "gemini-2.5-flash-lite"
+        self.model = model or settings.GEMINI_MODEL or "gemini-1.5-flash"
 
     def _get_candidate_models(self) -> list[str]:
         models = [self.model]

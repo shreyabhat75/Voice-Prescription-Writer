@@ -72,7 +72,12 @@ export function useAudioRecorder(options?: { onChunk?: (chunk: Blob) => void }):
       }
 
       const mediaStream = await navigator.mediaDevices.getUserMedia({
-        audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+          channelCount: 1,
+        },
       });
       streamRef.current = mediaStream;
       setStream(mediaStream);
@@ -108,7 +113,7 @@ export function useAudioRecorder(options?: { onChunk?: (chunk: Blob) => void }):
         }
       };
 
-      recorder.start(200);
+      recorder.start(250);
       setIsRecording(true);
       setIsPaused(false);
       timerRef.current = setInterval(() => setDuration((prev) => prev + 1), 1000);

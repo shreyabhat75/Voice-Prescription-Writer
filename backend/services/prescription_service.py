@@ -427,10 +427,14 @@ class PrescriptionService:
             edited_tx = rx.edited_transcript
 
         # 1. LLM Extraction with resilient local fallback
+        provider_name = "gemini"
+        model_name = "gemini-1.5-flash"
         try:
             llm_result = await self.llm_provider.extract_prescription(transcript)
             extracted_data = json.loads(llm_result.raw_json)
             raw_draft = PrescriptionDraft.model_validate(extracted_data)
+            provider_name = llm_result.provider
+            model_name = llm_result.model
         except Exception as e:
             logger.warning(
                 "Primary LLM structuring failed (%s). Falling back to resilient local ClinicalExtractor.",
@@ -441,6 +445,8 @@ class PrescriptionService:
             extractor = ClinicalExtractor()
             extracted_data = extractor.extract(transcript)
             raw_draft = PrescriptionDraft.model_validate(extracted_data)
+            provider_name = "clinical_extractor"
+            model_name = "deterministic_v1"
 
         # 2. Shorthand Normalization & AI Demographic/Gender Detection
         normalized_draft = await self.normalizer.normalize_async(raw_draft)
@@ -521,7 +527,7 @@ class PrescriptionService:
                         new_version,
                         current_rx.model_dump_json(),
                         "ai_structuring",
-                        f"Structured extraction via {llm_result.provider} ({llm_result.model})",
+                        f"Structured extraction via {provider_name} ({model_name})",
                         now,
                     ),
                 )

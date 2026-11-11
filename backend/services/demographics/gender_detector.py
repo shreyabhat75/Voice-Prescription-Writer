@@ -39,10 +39,10 @@ CRITICAL RULES:
 """
 
 CANDIDATE_GEMINI_MODELS = [
-    "gemini-2.5-flash-lite",
-    "gemini-3.1-flash-lite",
-    "gemini-3.5-flash",
-    "gemini-2.5-flash",
+    "gemini-1.5-flash",
+    "gemini-1.5-flash-8b",
+    "gemini-2.0-flash",
+    "gemini-1.5-pro",
 ]
 
 # Common Indian & Global Given Names Knowledge Base
@@ -179,7 +179,9 @@ class GenderDetector:
         settings = get_settings()
 
         # 1. Primary Strategy: Multi-Model LLM Reasoning with Automatic Failover
-        if settings.GEMINI_API_KEY and settings.LLM_PROVIDER.lower() == "gemini":
+        import os
+        is_testing = bool(os.getenv("PYTEST_CURRENT_TEST") or os.getenv("LLM_PROVIDER") == "mock" or settings.LLM_PROVIDER.lower() == "mock")
+        if settings.GEMINI_API_KEY and settings.LLM_PROVIDER.lower() == "gemini" and not is_testing:
             try:
                 import httpx
 

@@ -6,7 +6,7 @@ import asyncio
 import json
 import logging
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -64,7 +64,7 @@ async def websocket_transcribe(websocket: WebSocket, prescription_id: str):
     auto_structure_requested = False
 
     # Connect to Deepgram Live Streaming if API key is present
-    use_deepgram = bool(settings.DEEPGRAM_API_KEY and settings.STT_PROVIDER.lower() == "deepgram")
+    use_deepgram = bool(settings.DEEPGRAM_API_KEY and settings.STT_PROVIDER.lower() != "mock")
 
     if use_deepgram:
         try:
@@ -192,11 +192,25 @@ async def websocket_transcribe(websocket: WebSocket, prescription_id: str):
 
     full_audio_bytes = b"".join(audio_chunks)
     audio_id = str(uuid.uuid4())
-    audio_path = upload_dir / f"{audio_id}.webm"
+
+    # Detect container format from header magic bytes (supports WebM/Opus, OGG, WAV, MP4/AAC)
+    fmt = "webm"
+    if full_audio_bytes.startswith(b"\x1a\x45\xdf\xa3"):
+        fmt = "webm"
+    elif full_audio_bytes.startswith(b"OggS"):
+        fmt = "ogg"
+    elif full_audio_bytes.startswith(b"RIFF"):
+        fmt = "wav"
+    elif len(full_audio_bytes) > 8 and full_audio_bytes[4:8] == b"ftyp":
+        fmt = "mp4"
+    elif full_audio_bytes.startswith(b"\xff\xf1") or full_audio_bytes.startswith(b"\xff\xf9"):
+        fmt = "aac"
+
+    audio_path = upload_dir / f"{audio_id}.{fmt}"
     with open(audio_path, "wb") as f:
         f.write(full_audio_bytes)
 
-    now = datetime.now().isoformat()
+    now = datetime.now(timezone.utc).isoformat()
     audio_url = f"/api/audio/{audio_id}"
 
     # Build full transcript
@@ -205,20 +219,20 @@ async def websocket_transcribe(websocket: WebSocket, prescription_id: str):
     # If stream produced no transcript or is suspiciously short for audio > 3s, run provider transcribe fallback
     if not full_transcript or (len(full_audio_bytes) > 40000 and len(full_transcript.split()) < 3):
         try:
-            stt_res = await svc.stt_provider.transcribe(str(audio_path), audio_format="webm")
+            stt_res = await svc.stt_provider.transcribe(str(audio_path), audio_format=fmt)
             if stt_res.text.strip():
                 full_transcript = stt_res.text.strip()
         except Exception as ex:
             logger.warning("STT transcription fallback failed: %s", ex)
 
-    # Persist audio record & transcript in SQLite
+    # Persist audio record & transcript in SQLite/Postgres
     async with get_db() as db:
         await db.execute(
             """
             INSERT INTO audio_records (id, prescription_id, file_path, format, size_bytes, created_at)
-            VALUES (?, ?, ?, 'webm', ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?)
             """,
-            (audio_id, prescription_id, str(audio_path), len(full_audio_bytes), now),
+            (audio_id, prescription_id, str(audio_path), fmt, len(full_audio_bytes), now),
         )
         if full_transcript:
             await db.execute(

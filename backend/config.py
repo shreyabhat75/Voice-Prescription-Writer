@@ -32,16 +32,16 @@ class Settings(BaseModel):
     PDF_OUTPUT_DIR: str = Field(default_factory=lambda: os.getenv("PDF_OUTPUT_DIR", "./pdf_output"))
 
     # --- STT Provider ---
-    STT_PROVIDER: str = Field(default_factory=lambda: os.getenv("STT_PROVIDER", "mock"))
+    STT_PROVIDER: str = Field(default_factory=lambda: os.getenv("STT_PROVIDER", "deepgram" if os.getenv("DEEPGRAM_API_KEY") else "mock"))
     GOOGLE_APPLICATION_CREDENTIALS: Optional[str] = Field(default_factory=lambda: os.getenv("GOOGLE_APPLICATION_CREDENTIALS"))
     DEEPGRAM_API_KEY: Optional[str] = Field(default_factory=lambda: os.getenv("DEEPGRAM_API_KEY"))
 
     # --- LLM Provider ---
-    LLM_PROVIDER: str = Field(default_factory=lambda: os.getenv("LLM_PROVIDER", "mock"))
+    LLM_PROVIDER: str = Field(default_factory=lambda: os.getenv("LLM_PROVIDER", "gemini" if os.getenv("GEMINI_API_KEY") else ("openai" if os.getenv("OPENAI_API_KEY") else "mock")))
     OPENAI_API_KEY: Optional[str] = Field(default_factory=lambda: os.getenv("OPENAI_API_KEY"))
     OPENAI_MODEL: str = Field(default_factory=lambda: os.getenv("OPENAI_MODEL", "gpt-4o"))
     GEMINI_API_KEY: Optional[str] = Field(default_factory=lambda: os.getenv("GEMINI_API_KEY"))
-    GEMINI_MODEL: str = Field(default_factory=lambda: os.getenv("GEMINI_MODEL", "gemini-2.5-flash-lite"))
+    GEMINI_MODEL: str = Field(default_factory=lambda: os.getenv("GEMINI_MODEL", "gemini-1.5-flash"))
 
     # --- PDF ---
     CLINIC_NAME: str = Field(default_factory=lambda: os.getenv("CLINIC_NAME", "Voice Prescription Writer - Demo Clinic"))

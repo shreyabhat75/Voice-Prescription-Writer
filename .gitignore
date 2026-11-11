@@ -68,3 +68,7 @@ dataset/*.crdownload
 
 # Agents scratch
 .agents/
+
+# Local personal study guides
+PERSON_2_BACKEND_AI_STUDY_GUIDE.md
+

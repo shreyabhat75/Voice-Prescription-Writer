@@ -75,11 +75,24 @@ export const NewPrescription: React.FC = () => {
   const [activePrescriptionId, setActivePrescriptionId] = useState<string | null>(null);
 
   const wsRef = useRef<WebSocket | null>(null);
+  const pendingChunksRef = useRef<Blob[]>([]);
   const finalizedTextRef = useRef('');
   finalizedTextRef.current = finalizedText;
 
   const handleAudioChunk = (chunk: Blob) => {
-    if (wsRef.current?.readyState === WebSocket.OPEN) wsRef.current.send(chunk);
+    const ws = wsRef.current;
+    if (ws && ws.readyState === WebSocket.OPEN) {
+      if (pendingChunksRef.current.length > 0) {
+        for (const queued of pendingChunksRef.current) {
+          ws.send(queued);
+        }
+        pendingChunksRef.current = [];
+      }
+      ws.send(chunk);
+    } else {
+      // Buffer chunks while WebSocket connection handshake is negotiating on mobile networks
+      pendingChunksRef.current.push(chunk);
+    }
   };
 
   const { isRecording, isPaused, duration, audioUrl, error: micError,
@@ -95,6 +108,7 @@ export const NewPrescription: React.FC = () => {
     setInterimText('');
     setEditedTranscript('');
     setTranscriptStage('recording');
+    pendingChunksRef.current = [];
 
     try {
       const rx = await apiClient.createPrescription();
@@ -103,6 +117,15 @@ export const NewPrescription: React.FC = () => {
       const wsUrl = getWebSocketUrl(`/ws/transcribe/${rx.id}?language=${language}`);
       const ws = new WebSocket(wsUrl);
       wsRef.current = ws;
+
+      ws.onopen = () => {
+        if (pendingChunksRef.current.length > 0) {
+          for (const queued of pendingChunksRef.current) {
+            ws.send(queued);
+          }
+          pendingChunksRef.current = [];
+        }
+      };
 
       ws.onmessage = (event) => {
         try {
@@ -118,14 +141,20 @@ export const NewPrescription: React.FC = () => {
             } else {
               setInterimText(data.text);
             }
-          } else if (data.type === 'transcription_complete') {
+          } else if (data.type === 'transcription_complete' || data.type === 'completed') {
             const complete = data.transcript || data.raw_transcript || '';
-            setFinalizedText(complete);
-            finalizedTextRef.current = complete;
+            if (complete) {
+              setFinalizedText(complete);
+              finalizedTextRef.current = complete;
+              setEditedTranscript(complete);
+            }
             setInterimText('');
-            setEditedTranscript(complete);
-            setTranscriptStage('review');
-            setProcessingStep(null);
+            if (data.prescription?.id) {
+              navigate(`/prescription/${data.prescription.id}`);
+            } else {
+              setTranscriptStage('review');
+              setProcessingStep(null);
+            }
           } else if (data.type === 'error') {
             setError(data.message || 'Streaming error.');
             setProcessingStep(null);
@@ -200,6 +229,7 @@ export const NewPrescription: React.FC = () => {
   const handleCancel = () => {
     try { wsRef.current?.close(); } catch (err) { console.debug(err); }
     wsRef.current = null;
+    pendingChunksRef.current = [];
     resetRecording();
     setFinalizedText('');
     setInterimText('');
@@ -210,13 +240,25 @@ export const NewPrescription: React.FC = () => {
   };
 
   const handleStructure = async () => {
-    if (!activePrescriptionId) return;
+    let rxId = activePrescriptionId;
+    if (!rxId) {
+      try {
+        setProcessingStep('Initializing prescription record…');
+        const newRx = await apiClient.createPrescription();
+        rxId = newRx.id;
+        setActivePrescriptionId(newRx.id);
+      } catch (err: any) {
+        setError(err.response?.data?.detail || err.message || 'Failed to initialize prescription.');
+        setProcessingStep(null);
+        return;
+      }
+    }
     setError(null);
     try {
       setProcessingStep('AI extracting clinical fields and running evidence validation…');
       const transcript = editedTranscript.trim() || finalizedText.trim();
-      await apiClient.structurePrescription(activePrescriptionId, transcript);
-      navigate(`/prescription/${activePrescriptionId}`);
+      await apiClient.structurePrescription(rxId, transcript);
+      navigate(`/prescription/${rxId}`);
     } catch (err: any) {
       setError(err.response?.data?.detail || err.message || 'Structuring failed.');
       setProcessingStep(null);
