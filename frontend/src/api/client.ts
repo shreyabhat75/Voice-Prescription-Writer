@@ -11,6 +11,22 @@ import {
 const rawBase = import.meta.env.VITE_API_BASE_URL || '';
 export const API_BASE_URL = rawBase.replace(/\/+$/, '');
 
+// Construct a reliable WebSocket URL pointing directly to backend host in production (e.g. Render) or dev
+export function getWebSocketUrl(path: string): string {
+  const cleanPath = path.startsWith('/') ? path : `/${path}`;
+  if (API_BASE_URL && API_BASE_URL.startsWith('http')) {
+    try {
+      const url = new URL(API_BASE_URL);
+      const wsProto = url.protocol === 'https:' ? 'wss:' : 'ws:';
+      return `${wsProto}//${url.host}${cleanPath}`;
+    } catch {
+      // Fall through to window.location if URL parse fails
+    }
+  }
+  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+  return `${protocol}//${window.location.host}${cleanPath}`;
+}
+
 const api = axios.create({
   baseURL: API_BASE_URL ? `${API_BASE_URL}/api` : '/api',
 });
@@ -82,7 +98,16 @@ export const apiClient = {
   // Audio Upload using standard FormData without manual Content-Type header
   async uploadAudio(prescriptionId: string, audioBlob: Blob): Promise<Prescription> {
     const formData = new FormData();
-    formData.append('file', audioBlob, 'dictation.webm');
+    let filename = 'dictation.webm';
+    const blobType = (audioBlob.type || '').toLowerCase();
+    if (blobType.includes('mp4') || blobType.includes('aac') || blobType.includes('m4a')) {
+      filename = 'dictation.mp4';
+    } else if (blobType.includes('wav')) {
+      filename = 'dictation.wav';
+    } else if (blobType.includes('ogg')) {
+      filename = 'dictation.ogg';
+    }
+    formData.append('file', audioBlob, filename);
 
     // Let the browser set the boundary header automatically!
     const res = await api.post<Prescription>(

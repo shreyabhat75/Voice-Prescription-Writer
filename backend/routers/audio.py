@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 import uuid
+from datetime import datetime, timezone
 from pathlib import Path
 
 from fastapi import APIRouter, File, HTTPException, Request, UploadFile, status
@@ -48,13 +49,21 @@ async def upload_audio(
     upload_item = file or audio
     if upload_item:
         audio_bytes = await upload_item.read()
-        filename = upload_item.filename or "recording.webm"
-        if filename.endswith(".wav"):
+        filename = (upload_item.filename or "recording.webm").lower()
+        content_type = (getattr(upload_item, "content_type", "") or "").lower()
+
+        if filename.endswith(".wav") or "wav" in content_type:
             extension = ".wav"
-        elif filename.endswith(".mp4"):
+        elif filename.endswith(".mp4") or "mp4" in content_type or "m4a" in content_type or "aac" in content_type:
             extension = ".mp4"
-        elif filename.endswith(".ogg"):
+        elif filename.endswith(".ogg") or "ogg" in content_type:
             extension = ".ogg"
+        elif filename.endswith(".mp3") or "mpeg" in content_type or "mp3" in content_type:
+            extension = ".mp3"
+        elif filename.endswith(".flac") or "flac" in content_type:
+            extension = ".flac"
+        else:
+            extension = ".webm"
     else:
         # Check if form has any other file field name
         try:
@@ -84,26 +93,27 @@ async def upload_audio(
     with open(dest_path, "wb") as f:
         f.write(audio_bytes)
 
-    now = rx.updated_at
+    now = datetime.now(timezone.utc).isoformat()
     audio_url = f"/api/audio/{audio_id}"
+    fmt = extension.lstrip(".")
 
-    # Record in database
+    # Record in database using parameters (safe across SQLite and PostgreSQL)
     from backend.database import get_db
     async with get_db() as db:
         await db.execute(
             """
             INSERT INTO audio_records (id, prescription_id, file_path, format, size_bytes, created_at)
-            VALUES (?, ?, ?, ?, ?, datetime('now'))
+            VALUES (?, ?, ?, ?, ?, ?)
             """,
-            (audio_id, prescription_id, str(dest_path), extension.lstrip("."), len(audio_bytes)),
+            (audio_id, prescription_id, str(dest_path), fmt, len(audio_bytes), now),
         )
         await db.execute(
             """
             UPDATE prescriptions
-            SET audio_url = ?, status = 'transcribing', updated_at = datetime('now')
+            SET audio_url = ?, status = 'transcribing', updated_at = ?
             WHERE id = ?
             """,
-            (audio_url, prescription_id),
+            (audio_url, now, prescription_id),
         )
         await db.commit()
 
@@ -125,8 +135,12 @@ async def get_audio_file(audio_id: str):
     media_type = "audio/webm"
     if target_file.suffix == ".wav":
         media_type = "audio/wav"
-    elif target_file.suffix == ".mp4":
+    elif target_file.suffix in (".mp4", ".m4a", ".aac"):
         media_type = "audio/mp4"
+    elif target_file.suffix == ".ogg":
+        media_type = "audio/ogg"
+    elif target_file.suffix == ".mp3":
+        media_type = "audio/mpeg"
 
     return FileResponse(
         str(target_file),

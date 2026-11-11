@@ -47,6 +47,9 @@ class DeepgramSTTProvider(STTProvider):
                 "mp3": "audio/mpeg",
                 "flac": "audio/flac",
                 "ogg": "audio/ogg",
+                "mp4": "audio/mp4",
+                "m4a": "audio/mp4",
+                "aac": "audio/aac",
             }
 
             headers = {

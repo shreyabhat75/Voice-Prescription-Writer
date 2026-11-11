@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   ArrowRight, Sparkles, RotateCcw, FileText, Edit3, Radio, Languages,
 } from 'lucide-react';
-import { apiClient } from '../api/client';
+import { apiClient, getWebSocketUrl } from '../api/client';
 import { useAudioRecorder } from '../hooks/useAudioRecorder';
 import { RecordButton } from '../components/ui/RecordButton';
 import { StepIndicator } from '../components/ui/StepIndicator';
@@ -75,6 +75,8 @@ export const NewPrescription: React.FC = () => {
   const [activePrescriptionId, setActivePrescriptionId] = useState<string | null>(null);
 
   const wsRef = useRef<WebSocket | null>(null);
+  const finalizedTextRef = useRef('');
+  finalizedTextRef.current = finalizedText;
 
   const handleAudioChunk = (chunk: Blob) => {
     if (wsRef.current?.readyState === WebSocket.OPEN) wsRef.current.send(chunk);
@@ -89,6 +91,7 @@ export const NewPrescription: React.FC = () => {
   const handleStartLiveRecording = async () => {
     setError(null);
     setFinalizedText('');
+    finalizedTextRef.current = '';
     setInterimText('');
     setEditedTranscript('');
     setTranscriptStage('recording');
@@ -97,19 +100,28 @@ export const NewPrescription: React.FC = () => {
       const rx = await apiClient.createPrescription();
       setActivePrescriptionId(rx.id);
 
-      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const ws = new WebSocket(`${protocol}//${window.location.host}/ws/transcribe/${rx.id}?language=${language}`);
+      const wsUrl = getWebSocketUrl(`/ws/transcribe/${rx.id}?language=${language}`);
+      const ws = new WebSocket(wsUrl);
       wsRef.current = ws;
 
       ws.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data);
           if (data.type === 'transcript') {
-            if (data.is_final) { setFinalizedText((p) => (p ? p + ' ' : '') + data.text); setInterimText(''); }
-            else setInterimText(data.text);
+            if (data.is_final) {
+              setFinalizedText((p) => {
+                const next = (p ? p + ' ' : '') + data.text;
+                finalizedTextRef.current = next;
+                return next;
+              });
+              setInterimText('');
+            } else {
+              setInterimText(data.text);
+            }
           } else if (data.type === 'transcription_complete') {
             const complete = data.transcript || data.raw_transcript || '';
             setFinalizedText(complete);
+            finalizedTextRef.current = complete;
             setInterimText('');
             setEditedTranscript(complete);
             setTranscriptStage('review');
@@ -123,7 +135,9 @@ export const NewPrescription: React.FC = () => {
         }
       };
 
-      ws.onerror = () => {};
+      ws.onerror = (e) => {
+        console.warn('Live WebSocket notice (audio upload fallback ready):', e);
+      };
       await startRecording();
     } catch (err: any) {
       setError(err.message || 'Microphone access failed.');
@@ -134,31 +148,52 @@ export const NewPrescription: React.FC = () => {
   const handleStopLiveRecording = async () => {
     setProcessingStep('Finalizing transcription…');
     const blob = await stopRecording();
-    if (wsRef.current?.readyState === WebSocket.OPEN) {
-      wsRef.current.send(JSON.stringify({ type: 'stop', auto_structure: false }));
+    const ws = wsRef.current;
+    const isWsOpen = ws && ws.readyState === WebSocket.OPEN;
+
+    if (isWsOpen) {
+      try {
+        ws.send(JSON.stringify({ type: 'stop', auto_structure: false }));
+      } catch (err) {
+        console.warn('Failed to send stop signal on WS:', err);
+      }
     }
 
-    if (activePrescriptionId && blob && !finalizedText) {
-      setTimeout(async () => {
+    const checkAndFallback = async () => {
+      // If transcript was already delivered via WebSocket, move directly to review
+      if (finalizedTextRef.current && finalizedTextRef.current.trim()) {
+        setTranscriptStage('review');
+        setProcessingStep(null);
+        return;
+      }
+
+      // Robust fallback: upload recorded audio blob and transcribe via REST API
+      if (activePrescriptionId && blob && blob.size > 100) {
         try {
+          setProcessingStep('Uploading audio and transcribing…');
           await apiClient.uploadAudio(activePrescriptionId, blob);
           const rx = await apiClient.transcribe(activePrescriptionId);
           const text = rx.raw_transcript || '';
           setFinalizedText(text);
+          finalizedTextRef.current = text;
           setEditedTranscript(text);
           setTranscriptStage('review');
         } catch (e: any) {
-          setError(e.message || 'Transcription failed.');
+          setError(e.response?.data?.detail || e.message || 'Transcription failed. You can type or edit transcript manually.');
+          setTranscriptStage('review');
         } finally {
           setProcessingStep(null);
         }
-      }, 800);
-    } else {
-      // Fallback timer ensures review stage unlocks even on network delay
-      setTimeout(() => {
+      } else {
         setTranscriptStage((curr) => (curr === 'recording' ? 'review' : curr));
         setProcessingStep(null);
-      }, 1200);
+      }
+    };
+
+    if (isWsOpen) {
+      setTimeout(checkAndFallback, 1400);
+    } else {
+      await checkAndFallback();
     }
   };
 
